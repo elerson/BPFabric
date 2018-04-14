@@ -25,13 +25,13 @@ struct bpf_map_def SEC("maps") inports = {
 
 uint32_t params[2] = {7,13};*/
 
-struct bpf_map_def SEC("maps") firewall = {
+/*struct bpf_map_def SEC("maps") firewall = {
     .type = BPF_MAP_TYPE_HASH,
     .key_size = 64,
     .value_size = 2,
     .max_entries = 1,
     .map_flags = 0,
-};
+};*/
 
 
 uint64_t prog(struct packet *pkt)
@@ -39,7 +39,7 @@ uint64_t prog(struct packet *pkt)
 
     // Learning switch behaviour
     uint32_t *out_port;
-    uint32_t *found;
+    //uint32_t *found;
 
     /*if(bpf_map_lookup_elem(&firewall, pkt->eth.h_dest, &found) == -1){
         bpf_map_update_elem(&firewall, pkt->eth.h_dest,  0,  BPF_ANY);
