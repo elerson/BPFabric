@@ -26,9 +26,10 @@ struct bpf_map *bitmap_map_alloc(union bpf_attr *attr)
         errno = EINVAL;
         return NULL;
     }
-    /* allocate the bitmap structure*
+    /* allocate the bitmap structure*/
 
     bitmap = calloc(1, sizeof(*bitmap));
+    /*
     
     if (!bitmap) {
         errno = ENOMEM;
