@@ -25,13 +25,12 @@ struct bpf_map_def SEC("maps") inports = {
 
 uint32_t params[2] = {7,13};*/
 
-/*struct bpf_map_def SEC("maps") firewall = {
+struct bpf_map_def SEC("maps") firewall = {
     .type = BPF_MAP_TYPE_HASH,
     .key_size = 64,
     .value_size = 2,
     .max_entries = 1,
-    .map_flags = 0,
-};*/
+};
 
 
 uint64_t prog(struct packet *pkt)
