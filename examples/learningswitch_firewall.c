@@ -31,9 +31,6 @@ struct bpf_map_def SEC("maps") firewall = {
     .value_size = 2,
     .max_entries = 1,
     .map_flags = 0,
-    .function_ptr = hash,
-    .function_params = params,
-    .param_size = 2,
 };
 
 
@@ -44,10 +41,10 @@ uint64_t prog(struct packet *pkt)
     uint32_t *out_port;
     uint32_t *found;
 
-    if(bpf_map_lookup_elem(&firewall, pkt->eth.h_dest, &found) == -1){
+    /*if(bpf_map_lookup_elem(&firewall, pkt->eth.h_dest, &found) == -1){
         bpf_map_update_elem(&firewall, pkt->eth.h_dest,  0,  BPF_ANY);
         bpf_notify(0, found, sizeof(uint32_t));
-    }
+    }*/
 
     // if the source is not a broadcast or multicast
     if ((pkt->eth.h_source[0] & 1) == 0) {
