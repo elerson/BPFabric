@@ -9,7 +9,7 @@ struct bpf_map_def SEC("maps") inports = {
 };
 
 
-uint32_t hash(void* mac_addr, void* param){
+/*uint32_t hash(void* mac_addr, void* param){
 
     uint8_t* mac = mac_addr;
     uint32_t param_ = *((uint32_t*)param);
@@ -23,10 +23,10 @@ uint32_t hash(void* mac_addr, void* param){
 
 }
 
-uint32_t params[2] = {7,13};
+uint32_t params[2] = {7,13};*/
 
 struct bpf_map_def SEC("maps") firewall = {
-    .type = BPF_MAP_TYPE_BITMAP,
+    .type = BPF_MAP_TYPE_HASH,
     .key_size = 64,
     .value_size = 2,
     .max_entries = 1,
