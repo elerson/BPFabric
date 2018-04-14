@@ -26,6 +26,14 @@ const struct bpf_map_ops bpf_map_types[] = {
         .map_lookup_elem = array_map_lookup_elem,
         .map_update_elem = array_map_update_elem,
         .map_delete_elem = array_map_delete_elem,
+    },
+    [BPF_MAP_TYPE_BITMAP] = {
+        .map_alloc = array_map_alloc,
+        .map_free = array_map_free,
+        .map_get_next_key = array_map_get_next_key,
+        .map_lookup_elem = array_map_lookup_elem,
+        .map_update_elem = array_map_update_elem,
+        .map_delete_elem = array_map_delete_elem,
     }
 };
 

@@ -10,11 +10,17 @@ all:: libbpfmap.a
 bpfmap_mods += bpfmap
 bpfmap_mods += arraymap
 bpfmap_mods += hashtab
+bpfmap_mods += bitmapmap
+bpfmap_mods += test_arraymap
 bpfmap_mods += libghthash/hash_functions
 bpfmap_mods += libghthash/hash_table
 
+
 libbpfmap.a: $(bpfmap_mods:%=%.o)
 	$(AR) r '$@' $(bpfmap_mods:%=%.o)
+test:
+	gcc test_bitmapmap.c bitmapmap.c
+
 
 clean::
 	$(RM) *.o */*.o *.a
