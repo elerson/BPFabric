@@ -17,50 +17,79 @@ struct bpf_bitmap {
 
 struct bpf_map *bitmap_map_alloc(union bpf_attr *attr)
 {
-    struct bpf_bitmap *bitmap;
+    // struct bpf_bitmap *bitmap;
+    // uint64_t array_size;
+    // uint32_t elem_size;
+    // /* check sanity of attributes */
+    // if (attr->max_entries == 0 || attr->key_size == 0 ||
+    //     (attr->max_entries*attr->value_size)%attr->param_size != 0 || attr->map_flags) {
+    //     errno = EINVAL;
+    //     return NULL;
+    // }
+    // /* allocate the bitmap structure*/
+
+    // bitmap = calloc(1, sizeof(*bitmap));
+    
+    // if (!bitmap) {
+    //     errno = ENOMEM;
+    //     return NULL;
+    // }
+
+    // elem_size = (attr->key_size-1)/sizeof(uint32_t)*8 + 1;
+    // bitmap->bitmap_matrix = (uint32_t **)calloc(bitmap->map.max_entries, sizeof(uint32_t*));
+    // int j;
+    // for (j = 0; j < attr->max_entries; j++)
+    //     bitmap->bitmap_matrix[j] = (uint32_t *)calloc(elem_size, sizeof(uint32_t));
+
+
+    // if (!bitmap->bitmap_matrix) {
+    //     errno = ENOMEM;
+    //     return NULL;
+    // }
+
+
+    // /* copy mandatory map attributes */
+    // bitmap->map.map_type = attr->map_type;
+    // bitmap->map.key_size = attr->key_size;
+    // bitmap->map.value_size = attr->value_size;
+    // bitmap->map.max_entries = attr->max_entries;
+
+    // bitmap->map.function_params = attr->function_params;
+    // bitmap->map.param_size = attr->param_size;
+    // bitmap->map.function_ptr = attr->function_ptr;
+    // bitmap->elem_size = elem_size;
+
+    // return &bitmap->map;
+
+
+    struct bpf_array *array;
     uint64_t array_size;
     uint32_t elem_size;
+
     /* check sanity of attributes */
-    /*if (attr->max_entries == 0 || attr->key_size == 0 ||
-        (attr->max_entries*attr->value_size)%attr->param_size != 0 || attr->map_flags) {
+    if (attr->max_entries == 0 || attr->key_size != 4 ||
+        attr->value_size == 0 || attr->map_flags) {
         errno = EINVAL;
         return NULL;
     }
-    /* allocate the bitmap structure*/
 
-    bitmap = calloc(1, sizeof(*bitmap));
-    /*
-    
-    if (!bitmap) {
+    elem_size = round_up(attr->value_size, 8);
+
+    /* allocate all map elements and zero-initialize them */
+    array = calloc(attr->max_entries * elem_size, sizeof(*array));
+    if (!array) {
         errno = ENOMEM;
         return NULL;
     }
 
-    elem_size = (attr->key_size-1)/sizeof(uint32_t)*8 + 1;
-    bitmap->bitmap_matrix = (uint32_t **)calloc(bitmap->map.max_entries, sizeof(uint32_t*));
-    int j;
-    for (j = 0; j < attr->max_entries; j++)
-        bitmap->bitmap_matrix[j] = (uint32_t *)calloc(elem_size, sizeof(uint32_t));
-
-
-    if (!bitmap->bitmap_matrix) {
-        errno = ENOMEM;
-        return NULL;
-    }*/
-
-
     /* copy mandatory map attributes */
-    bitmap->map.map_type = attr->map_type;
-    bitmap->map.key_size = attr->key_size;
-    bitmap->map.value_size = attr->value_size;
-    bitmap->map.max_entries = attr->max_entries;
-    /*
-    bitmap->map.function_params = attr->function_params;
-    bitmap->map.param_size = attr->param_size;
-    bitmap->map.function_ptr = attr->function_ptr;*/
-    bitmap->elem_size = elem_size;
+    array->map.map_type = attr->map_type;
+    array->map.key_size = attr->key_size;
+    array->map.value_size = attr->value_size;
+    array->map.max_entries = attr->max_entries;
+    array->elem_size = elem_size;
 
-    return &bitmap->map;
+    return &array->map;
 }
 
 void bitmap_map_free(struct bpf_map *map)
