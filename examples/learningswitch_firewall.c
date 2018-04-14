@@ -27,9 +27,9 @@ uint32_t params[2] = {7,13};*/
 
 struct bpf_map_def SEC("maps") firewall = {
     .type = BPF_MAP_TYPE_HASH,
-    .key_size = 64,
-    .value_size = 2,
-    .max_entries = 1,
+    .key_size = 6,
+    .value_size = sizeof(uint32_t),
+    .max_entries = 256,
 };
 
 
