@@ -4,6 +4,7 @@
 #include "bpfmap.h"
 #include "arraymap.h"
 #include "hashtab.h"
+#include "bitmapmap.h"
 
 #define MAX_MAPS 64
 
@@ -27,13 +28,29 @@ const struct bpf_map_ops bpf_map_types[] = {
         .map_update_elem = array_map_update_elem,
         .map_delete_elem = array_map_delete_elem,
     },
+    [BPF_MAP_TYPE_PROG_ARRAY] = {
+        .map_alloc = NULL,
+        .map_free = NULL,
+        .map_get_next_key = NULL,
+        .map_lookup_elem = NULL,
+        .map_update_elem = NULL,
+        .map_delete_elem = NULL,
+    },
+    [BPF_MAP_TYPE_PERF_EVENT_ARRAY] = {
+        .map_alloc = NULL,
+        .map_free = NULL,
+        .map_get_next_key = NULL,
+        .map_lookup_elem = NULL,
+        .map_update_elem = NULL,
+        .map_delete_elem = NULL,
+    },
     [BPF_MAP_TYPE_BITMAP] = {
-        .map_alloc = array_map_alloc,
-        .map_free = array_map_free,
-        .map_get_next_key = array_map_get_next_key,
-        .map_lookup_elem = array_map_lookup_elem,
-        .map_update_elem = array_map_update_elem,
-        .map_delete_elem = array_map_delete_elem,
+        .map_alloc = bitmap_map_alloc,
+        .map_free = bitmap_map_free,
+        .map_get_next_key = bitmap_map_get_next_key,
+        .map_lookup_elem = bitmap_map_lookup_elem,
+        .map_update_elem = bitmap_map_update_elem,
+        .map_delete_elem = bitmap_map_delete_elem,
     }
 };
 
@@ -49,13 +66,16 @@ int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size, int
 
     //
     const struct bpf_map_ops *map_type_ops = &bpf_map_types[map_type];
+    //printf("alloc %x %d %d\n", map_type_ops, map_type, BPF_MAP_TYPE_BITMAP);
     struct bpf_map *map;
 
+    //printf("test 2\n");
     map = map_type_ops->map_alloc(&attr);
+    //printf("test 1\n");
     if (map == NULL) {
         return -1;
     }
-
+    //printf("alloc %x\n", map);
     map->ops = map_type_ops;
 
     // find a free idx for this map
@@ -67,7 +87,7 @@ int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size, int
             break;
         }
     }
-
+    //printf("id %d\n", map_idx);
     return map_idx;
 }
 

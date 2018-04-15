@@ -4,12 +4,10 @@
 #include <stdint.h>
 
 /* flags for BPF_MAP_UPDATE_ELEM command */
-
 #define BPF_ANY         0 /* create new element or update existing */
 #define BPF_NOEXIST     1 /* create new element if it didn't exist */
 #define BPF_CLEAN       2 /* clean exisiting values*/
 #define BPF_EXIST       3 /* update existing element */
-
 
 #define BPF_F_NO_PREALLOC       (1U << 0)
 
@@ -34,21 +32,18 @@ enum bpf_map_type {
     BPF_MAP_TYPE_UNSPEC,
     BPF_MAP_TYPE_HASH,
     BPF_MAP_TYPE_ARRAY,
+    BPF_MAP_TYPE_PROG_ARRAY,
+    BPF_MAP_TYPE_PERF_EVENT_ARRAY,    
     BPF_MAP_TYPE_BITMAP,
 };
 
 union bpf_attr {
-
     struct { /* anonymous struct used by BPF_MAP_CREATE command */
         uint32_t    map_type;    /* one of enum bpf_map_type */
         uint32_t    key_size;    /* size of key in bytes */
         uint32_t    value_size;    /* size of value in bytes */
         uint32_t    max_entries;    /* max number of entries in a map */
         uint32_t    map_flags;    /* prealloc or not */
-        uint32_t (*function_ptr)(void*, void*);
-
-        void*   function_params;
-        uint32_t    param_size;
     };
 
     struct { /* anonymous struct used by BPF_MAP_*_ELEM commands */
@@ -80,18 +75,14 @@ struct bpf_map {
     uint32_t value_size;
     uint32_t max_entries;
     uint32_t map_flags;
+
     uint32_t pages;
     // struct user_struct *user;
     const struct bpf_map_ops *ops;
 
-
-    uint32_t (*function_ptr)(void*, void*);
-
-    void* function_params;
-    uint32_t param_size;
-
     // atomic_t usercnt;
 };
+
 
 
 struct bpf_array {

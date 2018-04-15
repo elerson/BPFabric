@@ -256,16 +256,6 @@ int recv_table_list_request(void *buffer, Header *header) {
             memcpy(items, data, n_items * item_size);
         }
 
-        else if (tab_entry->type == BPF_MAP_TYPE_BITMAP) {
-            uint32_t key = 0;
-            n_items = tab_entry->max_entries;
-            item_size = tab_entry->value_size;
-
-            items = malloc(sizeof(uint32_t));
-            bpf_lookup_elem(tab_entry->fd, &key, &items);
-        }
-
-
         reply.n_items = n_items;
         reply.has_n_items = 1;
 

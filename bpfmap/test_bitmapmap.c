@@ -2,43 +2,22 @@
 #include <stdio.h>
 #include "bitmapmap.h"
 
-struct ewma_stats {
-    uint64_t volume;
-    uint64_t packets;
-    uint64_t prediction;
-    uint32_t lasttime;
-    uint32_t count;
-};
-
-uint32_t hash(void* key, void* param){
-
-    uint32_t key_ = *((uint32_t*)key);
-    uint32_t param_ = *((uint32_t*)param);
-    printf("hash (%d)\n", key_%param_);
-    return key_%param_;
-
-}
-
 int main() {
 
     uint32_t params[2] = {7,50};
 
     union bpf_attr attr = {
         .map_type = BPF_MAP_TYPE_BITMAP,
-        .key_size = 64,
-        .value_size = 2,
-        .max_entries = 1,
+        .key_size = 2,
+        .value_size = 64,
+        .max_entries = 2,
         .map_flags = 0,
-        .function_ptr = hash,
-        .function_params = params,
-        .param_size = 2,
     };
 
     // static struct bpf_map *array_map_alloc(union bpf_attr *attr);
     struct bpf_map *bitmap_map;
     bitmap_map = bitmap_map_alloc(&attr);
 
-    
 
     if (bitmap_map == NULL) {
         printf("Error creating the array map\n");

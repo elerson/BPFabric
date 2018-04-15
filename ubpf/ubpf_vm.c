@@ -701,7 +701,7 @@ ubpf_error(const char *fmt, ...)
     }
     va_end(ap);
     return msg;
-}
+};
 
 int ubpf_get_tables(const struct ubpf_vm *vm) {
     return vm->tables;

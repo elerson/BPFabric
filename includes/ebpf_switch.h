@@ -12,10 +12,6 @@ struct bpf_map_def {
     unsigned int value_size;
     unsigned int max_entries;
     unsigned int map_flags;
-    uint32_t (*function_ptr)(void*, void*);
-
-    void*   function_params;
-    uint32_t    param_size;
 };
 
 #endif

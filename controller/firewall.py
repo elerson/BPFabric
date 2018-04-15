@@ -16,10 +16,12 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         with open('../examples/learningswitch_firewall.o', 'rb') as f:
             print("Installing the eBPF ELF")
             connection.send(InstallRequest(elf=f.read()))
+	    ipsrc = struct.pack('I', 167772170)
+	    connection.send(TableEntryInsertRequest(table_name="firewall", key=ipsrc, value=struct.pack('I', 0)))
 
     @set_event_handler(Header.NOTIFY)
     def notify_event(self, connection, pkt):
-        t = struct.unpack('<III', pkt.data)
+        t, arrival, departure = struct.unpack('<III', pkt.data)
         print t, arrival, departure
 
 
