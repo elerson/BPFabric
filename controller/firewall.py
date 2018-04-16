@@ -8,6 +8,12 @@ from core.packets import *
 def int2ip(addr):
     return socket.inet_ntoa(struct.pack("!I", addr))
 
+def ip2long(ip):
+    packedIP = socket.inet_aton(ip)
+    return struct.unpack("<L", packedIP)[0]
+
+iplist = ['10.0.1.10', '10.0.4.10']
+
 class SimpleSwitchApplication(eBPFCoreApplication):
     @set_event_handler(Header.HELLO)
     def hello(self, connection, pkt):
@@ -16,8 +22,11 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         with open('../examples/learningswitch_firewall.o', 'rb') as f:
             print("Installing the eBPF ELF")
             connection.send(InstallRequest(elf=f.read()))
-	    ipsrc = struct.pack('I', 167772170)
-	    connection.send(TableEntryInsertRequest(table_name="firewall", key=ipsrc, value=struct.pack('I', 0)))
+
+	    for ip in iplist:
+	    	ipsrc = struct.pack('I', ip2long(ip))
+		print(ip2long(ip))
+	    	connection.send(TableEntryInsertRequest(table_name="firewall", key=ipsrc, value=struct.pack('<I', 0)))
 
     @set_event_handler(Header.NOTIFY)
     def notify_event(self, connection, pkt):

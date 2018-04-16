@@ -10,9 +10,9 @@
 uint32_t ret;
 
 
-uint32_t hash(uint32_t key, uint32_t param1, uint32_t param2)
-{
-  
+uint32_t hash(uint32_t key, uint32_t param1, uint32_t param2){
+    //printf("hh %d %d %d\n", key, param1, key*7 + param1*13 + 31*param2);
+    
     uint32_t new_key = (key+param1)*7 + param1*13 + 31*param2;
     ght_hash_key_t p_key;
     p_key.p_key = &new_key;
@@ -63,6 +63,7 @@ void bitmap_map_free(struct bpf_map *map)
 
 void *bitmap_map_lookup_elem(struct bpf_map *map, void *key)
 {
+    //printf("find %d\n", *((uint32_t*) key));
     uint32_t index, hash_value, i;
     ret = 1;
     uint32_t *ptr;
@@ -72,9 +73,12 @@ void *bitmap_map_lookup_elem(struct bpf_map *map, void *key)
     	for (i = 0; i < array->elem_size; i++)
         {
     	    hash_value = hash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
+            //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
     	    ret = (ptr[hash_value/sizeof(uint32_t)*8] & (0x1 << (hash_value%(sizeof(uint32_t)*8)))) != 0;
         }
+        //printf("\n");
     }
+    //printf("found %d\n", ret);
     return &ret;
 }
 
@@ -87,7 +91,7 @@ int bitmap_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
                  uint64_t map_flags)
 {
-    //printf("update %d \n", *((uint32_t*) key));
+    //printf("update %d\n", *((uint32_t*) key));
 
     if (map_flags > BPF_EXIST) {
         /* unknown flags */
@@ -122,11 +126,13 @@ int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
         return 0;
     }
 
+
     for (index = 0; index < array->map.max_entries; index++ ){
         ptr = (uint32_t*) array->value + array->map.value_size*index;
         for (i = 0; i < array->elem_size; i++)
         {
             hash_value = hash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
+            //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
             ptr[hash_value/sizeof(uint32_t)*8] |= (0x1 << (hash_value%(sizeof(uint32_t)*8)));
         }
     }
