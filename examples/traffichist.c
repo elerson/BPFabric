@@ -5,6 +5,12 @@
 // #include <linux/icmp.h>
 #include "ebpf_switch.h"
 
+struct arrival_stats {
+    uint32_t lasttime;
+    uint32_t arrival;
+    uint32_t departure;
+};
+
 struct bpf_map_def SEC("maps") traffichist = {
     .type = BPF_MAP_TYPE_ARRAY,
     .key_size = sizeof(uint32_t),

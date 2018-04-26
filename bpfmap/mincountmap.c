@@ -4,10 +4,11 @@
 #include <string.h>
 #include <errno.h>
 
-#include "bitmapmap.h"
+#include "mincountmap.h"
 #include "libghthash/ght_hash_table.h"
 
-uint32_t bitmaphash(uint32_t key, uint32_t param1, uint32_t param2){
+
+uint32_t mincounthash(uint32_t key, uint32_t param1, uint32_t param2){
     //printf("hh %d %d %d\n", key, param1, key*7 + param1*13 + 31*param2);
     
     uint32_t new_key = (key+param1)*7 + param1*13 + 31*param2;
@@ -18,9 +19,9 @@ uint32_t bitmaphash(uint32_t key, uint32_t param1, uint32_t param2){
     return ght_one_at_a_time_hash(&p_key);
 }
 
-struct bpf_map *bitmap_map_alloc(union bpf_attr *attr)
+struct bpf_map *mincountmap_map_alloc(union bpf_attr *attr)
 {
-    struct bpf_array *bitmap;
+    struct bpf_array *mincountmap;
     uint64_t array_size;
     uint32_t elem_size;
    
@@ -31,62 +32,65 @@ struct bpf_map *bitmap_map_alloc(union bpf_attr *attr)
         return NULL;
     }
 
-    elem_size = ((attr->value_size-1)/(sizeof(uint32_t)*8) + 1)*sizeof(uint32_t);
-    /* allocate the bitmap structure*/
-    bitmap = calloc(attr->max_entries * elem_size, sizeof(*bitmap));
+    elem_size = attr->value_size*sizeof(uint32_t);
+    /* allocate the mincountmap structure*/
+    mincountmap = calloc(attr->max_entries * elem_size, sizeof(*mincountmap));
     
-    if (!bitmap) {
+    if (!mincountmap) {
         errno = ENOMEM;
         return NULL;
     }
 
     /* copy mandatory map attributes */
-    bitmap->map.map_type = BPF_MAP_TYPE_ARRAY;
-    bitmap->map.key_size = sizeof(uint32_t);
-    bitmap->map.value_size = elem_size;
-    bitmap->map.max_entries = attr->max_entries;
+    mincountmap->map.map_type = BPF_MAP_TYPE_ARRAY;
+    mincountmap->map.key_size = sizeof(uint32_t);
+    mincountmap->map.value_size = elem_size;
+    mincountmap->map.max_entries = attr->max_entries;
 
-    bitmap->elem_size = attr->key_size;
+    mincountmap->elem_size = attr->key_size;
 
-    return &bitmap->map;
+    return &mincountmap->map;
 
 }
 
-void bitmap_map_free(struct bpf_map *map)
+void mincountmap_map_free(struct bpf_map *map)
 {
-    struct bpf_array  *array = (struct bpf_array*) container_of(map, struct bpf_array, map);
+    struct bpf_array *array = (struct bpf_array*) container_of(map, struct bpf_array, map);
     free(array);
 }
 
-void *bitmap_map_lookup_elem(struct bpf_map *map, void *key)
+void *mincountmap_map_lookup_elem(struct bpf_map *map, void *key)
 {
     //printf("find %d\n", *((uint32_t*) key));
     uint32_t index, hash_value, i;
+    
     uint32_t* ret = calloc(1, sizeof(uint32_t));
-    *ret = 1;
+    *ret = 0xFFFFFFFF;
     uint32_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
+    uint num_elements = array->map.value_size/sizeof(uint32_t);
+
     for (index = 0; index < array->map.max_entries; index++ ){
     	ptr = (uint32_t*) array->value + array->map.value_size*index;
     	for (i = 0; i < array->elem_size; i++)
         {
-    	    hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
+    	    hash_value = mincounthash(*((uint32_t*) key), index, i)%(num_elements);
             //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
-    	    *ret &= (ptr[hash_value/sizeof(uint32_t)*8] & (0x1 << (hash_value%(sizeof(uint32_t)*8)))) != 0;
+    	    *ret = *ret < ptr[hash_value]? *ret : ptr[hash_value];
         }
         //printf("\n");
     }
-    //printf("found %d\n", ret);
+    //printf("found %d\n", *ret);
     return ret;
 }
 
-int bitmap_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
+int mincountmap_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 {
     errno = EINVAL;
     return -1;
 }
 
-int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
+int mincountmap_map_update_elem(struct bpf_map *map, void *key, void *value,
                  uint64_t map_flags)
 {
     //printf("update %d\n", *((uint32_t*) key));
@@ -102,17 +106,19 @@ int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
         return -1;
     }
    
-    //Clean the bitmap fields 
+    //Clean the mincountmap fields 
     uint32_t i, index;
     uint32_t hash_value;
     uint32_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
+    uint num_elements = array->map.value_size/sizeof(uint32_t);
+    //printf("(%d)", (value));
     if(map_flags == BPF_CLEAN)
     {
         for (index = 0; index < array->map.max_entries; index++ )
         {   
             ptr = (uint32_t*) array->value + array->map.value_size*index;
-            for (i = 0; i < array->map.value_size/sizeof(uint32_t); i++)
+            for (i = 0; i < num_elements; i++)
             {
                 ptr[i] = 0;            
             }
@@ -120,20 +126,19 @@ int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
         return 0;
     }
 
-
+    
     for (index = 0; index < array->map.max_entries; index++ ){
         ptr = (uint32_t*) array->value + array->map.value_size*index;
         for (i = 0; i < array->elem_size; i++)
         {
-            hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
-            //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
-            ptr[hash_value/sizeof(uint32_t)*8] |= (0x1 << (hash_value%(sizeof(uint32_t)*8)));
+            hash_value = mincounthash(*((uint32_t*) key), index, i)%(num_elements);
+            ptr[hash_value] += 1;
         }
     }
     return 0;
 }
 
-int bitmap_map_delete_elem(struct bpf_map *map, void *key)
+int mincountmap_map_delete_elem(struct bpf_map *map, void *key)
 {
     errno = EINVAL;
     return -1;

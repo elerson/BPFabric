@@ -28,6 +28,9 @@
 
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
+
+
+
 enum bpf_map_type {
     BPF_MAP_TYPE_UNSPEC,
     BPF_MAP_TYPE_HASH,
@@ -35,6 +38,7 @@ enum bpf_map_type {
     BPF_MAP_TYPE_PROG_ARRAY,
     BPF_MAP_TYPE_PERF_EVENT_ARRAY,    
     BPF_MAP_TYPE_BITMAP,
+    BPF_MAP_TYPE_MINCOUNT,
 };
 
 union bpf_attr {

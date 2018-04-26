@@ -5,8 +5,10 @@
 #include "arraymap.h"
 #include "hashtab.h"
 #include "bitmapmap.h"
+#include "mincountmap.h"
 
 #define MAX_MAPS 64
+#define BPF_MAP_TYPE_MINCOUNT 6
 
 struct bpf_map *bpf_maps[MAX_MAPS] = {0};
 
@@ -51,6 +53,14 @@ const struct bpf_map_ops bpf_map_types[] = {
         .map_lookup_elem = bitmap_map_lookup_elem,
         .map_update_elem = bitmap_map_update_elem,
         .map_delete_elem = bitmap_map_delete_elem,
+    },
+    [BPF_MAP_TYPE_MINCOUNT] = {
+        .map_alloc = mincountmap_map_alloc,
+        .map_free  = mincountmap_map_free,
+        .map_get_next_key = mincountmap_map_get_next_key,
+        .map_lookup_elem = mincountmap_map_lookup_elem,
+        .map_update_elem = mincountmap_map_update_elem,
+        .map_delete_elem = mincountmap_map_delete_elem,
     }
 };
 
