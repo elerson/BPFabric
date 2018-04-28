@@ -1,12 +1,14 @@
 #include <linux/if_ether.h>
 #include <netinet/ip.h>
 #include "ebpf_switch.h"
+#define BPF_MAP_TYPE_MINCOUNT 5
+
 
 struct bpf_map_def SEC("maps") firewall = {
         .type = BPF_MAP_TYPE_BITMAP,
-        .key_size = 2,
-        .value_size = 1024,
-        .max_entries = 1,
+        .key_size = 2,      // hashes - k
+        .value_size = 1024, // bits in the table
+        .max_entries = 1,   // number rows in the table
 };
 
 struct bpf_map_def SEC("maps") inports = {
