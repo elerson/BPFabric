@@ -46,11 +46,11 @@ uint64_t prog(struct packet *pkt)
 	unsigned int *result;
 	bpf_map_lookup_elem(&stats, &(ipv4->ip_src), &result);
 
-	if(*result%100000 == 0){
+	/*if(*result%100000 == 0){
 	   astats->num_packets = *result;
 	   astats->ip = *((uint32_t*) &(ipv4->ip_src));
 	   bpf_notify(0, astats, sizeof(struct arrival_stats));
-        }
+        }*/
 
     }
 

@@ -42,7 +42,7 @@ struct bpf_map *mincountmap_map_alloc(union bpf_attr *attr)
     }
 
     /* copy mandatory map attributes */
-    mincountmap->map.map_type = BPF_MAP_TYPE_ARRAY;
+    mincountmap->map.map_type = attr->map_type;
     mincountmap->map.key_size = sizeof(uint32_t);
     mincountmap->map.value_size = elem_size;
     mincountmap->map.max_entries = attr->max_entries;

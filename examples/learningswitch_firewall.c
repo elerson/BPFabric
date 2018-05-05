@@ -1,7 +1,7 @@
 #include <linux/if_ether.h>
 #include <netinet/ip.h>
 #include "ebpf_switch.h"
-#define BPF_MAP_TYPE_MINCOUNT 5
+#define BPF_MAP_TYPE_BITMAP 5
 
 
 struct bpf_map_def SEC("maps") firewall = {

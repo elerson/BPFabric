@@ -9,6 +9,8 @@ message TableDefinition {
         UNSPEC = 0;
         HASH   = 1;
         ARRAY  = 2;
+	BITMAP = 5;
+        MINCOUNT = 6;
     }
 
     required string table_name    = 1;

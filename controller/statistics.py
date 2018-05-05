@@ -59,6 +59,28 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             print("Installing the eBPF ELF")
             connection.send(InstallRequest(elf=f.read()))
 
+        self.connection = connection
+        self.last = 0
+        self.request()
+
+
+    def request(self):        
+
+        ipsrc = struct.pack('I', ip2long('10.0.1.10'))
+        print(ip2long('10.0.1.10'))       
+        self.connection.send(TableEntryGetRequest(table_name="stats", key=ipsrc))
+
+        threading.Timer(0.5, self.request).start()
+
+
+
+    @set_event_handler(Header.TABLE_ENTRY_GET_REPLY)
+    def table_entry_get_reply(self, connection, pkt):
+
+        print('found ',  pkt.value.encode('hex'), (struct.unpack('<I', pkt.value)[0] - self.last)/0.5)#struct.unpack('<I', ))
+        self.last = struct.unpack('<I', pkt.value)[0]
+        #tabulate([(pkt.key.encode('hex'), pkt.value.encode('hex'))], headers=["Key", "Value"])
+
     @set_event_handler(Header.NOTIFY)
     def notify_event(self, connection, pkt):
         ip, num_packets = struct.unpack('<II', pkt.data)

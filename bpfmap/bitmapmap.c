@@ -40,8 +40,10 @@ struct bpf_map *bitmap_map_alloc(union bpf_attr *attr)
         return NULL;
     }
 
+    //printf("teste\n");
+
     /* copy mandatory map attributes */
-    bitmap->map.map_type = BPF_MAP_TYPE_ARRAY;
+    bitmap->map.map_type = attr->map_type;
     bitmap->map.key_size = sizeof(uint32_t);
     bitmap->map.value_size = elem_size;
     bitmap->map.max_entries = attr->max_entries;
@@ -76,7 +78,7 @@ void *bitmap_map_lookup_elem(struct bpf_map *map, void *key)
         }
         //printf("\n");
     }
-    //printf("found %d\n", ret);
+    //printf("found %d\n", *ret);
     return ret;
 }
 

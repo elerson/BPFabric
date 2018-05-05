@@ -31,6 +31,9 @@
     #define unlikely(x)        __builtin_expect(!!(x), 0)
 #endif
 
+#define BPF_MAP_TYPE_BITMAP 5
+#define BPF_MAP_TYPE_MINCOUNT 6
+
 static sig_atomic_t sigint = 0;
 
 typedef int (*handler)(void* buffer, Header *header);
@@ -256,6 +259,17 @@ int recv_table_list_request(void *buffer, Header *header) {
             memcpy(items, data, n_items * item_size);
         }
 
+	else if ((tab_entry->type == BPF_MAP_TYPE_BITMAP) || (tab_entry->type == BPF_MAP_TYPE_MINCOUNT) ) {
+            uint32_t key = 0;
+            n_items = 1;
+            item_size = sizeof(uint32_t);
+
+            void *data;
+            items = malloc(n_items * item_size);
+            bpf_lookup_elem(tab_entry->fd, &key, &data);
+            memcpy(items, data, n_items * item_size);
+        }
+
         reply.n_items = n_items;
         reply.has_n_items = 1;
 
@@ -302,17 +316,36 @@ int recv_table_entry_get_request(void *buffer, Header *header) {
     if (ret == -1) {
         reply.status = TABLE_STATUS__TABLE_NOT_FOUND;
     } else {
-        reply.has_key = 1;
-        reply.key = request->key;
-        reply.value.len = tab_entry->value_size;
-        reply.value.data = malloc(reply.value.len);
 
-        ret = bpf_lookup_elem(tab_entry->fd, request->key.data, &reply.value.data);
-        if (ret == -1) {
-            reply.status = TABLE_STATUS__ENTRY_NOT_FOUND;
+
+	if ((tab_entry->type == BPF_MAP_TYPE_BITMAP) || (tab_entry->type == BPF_MAP_TYPE_MINCOUNT) ) {
+            reply.has_key = 1;
+            reply.key = request->key;
+            reply.value.len = sizeof(uint32_t);
+            reply.value.data = malloc(reply.value.len);
+
+            ret = bpf_lookup_elem(tab_entry->fd, request->key.data, &reply.value.data);
+	    
+            if (ret == -1) {
+               reply.status = TABLE_STATUS__ENTRY_NOT_FOUND;
+            } else {
+               reply.status = TABLE_STATUS__SUCCESS;
+               reply.has_value = 1;
+            }
         } else {
-            reply.status = TABLE_STATUS__SUCCESS;
-            reply.has_value = 1;
+
+            reply.has_key = 1;
+            reply.key = request->key;
+            reply.value.len = tab_entry->value_size;
+            reply.value.data = malloc(reply.value.len);
+
+            ret = bpf_lookup_elem(tab_entry->fd, request->key.data, &reply.value.data);
+            if (ret == -1) {
+               reply.status = TABLE_STATUS__ENTRY_NOT_FOUND;
+            } else {
+               reply.status = TABLE_STATUS__SUCCESS;
+               reply.has_value = 1;
+            }
         }
     }
 
