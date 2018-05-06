@@ -8,9 +8,20 @@
 
 struct bpf_map_def {
     unsigned int type;
-    unsigned int key_size;
-    unsigned int value_size;
-    unsigned int max_entries;
+    union{
+       unsigned int key_size;
+       unsigned int num_hashes;
+    };
+    union{
+        unsigned int value_size;
+        unsigned int num_bits;
+        unsigned int num_cols;
+    };
+    union{
+        unsigned int max_entries;
+        unsigned int num_rows;
+    };   
+    
     unsigned int map_flags;
 };
 

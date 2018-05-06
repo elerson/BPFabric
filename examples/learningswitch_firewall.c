@@ -6,9 +6,9 @@
 
 struct bpf_map_def SEC("maps") firewall = {
         .type = BPF_MAP_TYPE_BITMAP,
-        .key_size = 2,      // hashes - k
-        .value_size = 1024, // bits in the table
-        .max_entries = 1,   // number rows in the table
+        .num_hashes = 2,      // hashes - k
+        .num_bits = 1024, // bits in the table
+        .num_rows = 1,   // number rows in the table
 };
 
 struct bpf_map_def SEC("maps") inports = {

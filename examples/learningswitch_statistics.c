@@ -5,9 +5,9 @@
 
 struct bpf_map_def SEC("maps") stats = {
         .type = BPF_MAP_TYPE_MINCOUNT,
-        .key_size = 2,            // hash for each row
-        .value_size = 100,        // table colums
-        .max_entries = 1,         // table rows
+        .num_hashes = 2,            // hash for each row
+        .num_cols = 100,          // table colums
+        .num_rows = 1,           // table rows
 };
 
 struct bpf_map_def SEC("maps") inports = {
