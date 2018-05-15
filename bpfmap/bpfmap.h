@@ -39,6 +39,7 @@ enum bpf_map_type {
     BPF_MAP_TYPE_PERF_EVENT_ARRAY,    
     BPF_MAP_TYPE_BITMAP,
     BPF_MAP_TYPE_MINCOUNT,
+    BPF_MAP_TYPE_PCSA
 };
 
 union bpf_attr {

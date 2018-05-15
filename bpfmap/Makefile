@@ -12,6 +12,7 @@ bpfmap_mods += arraymap
 bpfmap_mods += hashtab
 bpfmap_mods += bitmapmap
 bpfmap_mods += mincountmap
+bpfmap_mods += pcsamap
 bpfmap_mods += test_arraymap
 bpfmap_mods += libghthash/hash_functions
 bpfmap_mods += libghthash/hash_table
@@ -20,7 +21,7 @@ bpfmap_mods += libghthash/hash_table
 libbpfmap.a: $(bpfmap_mods:%=%.o)
 	$(AR) r '$@' $(bpfmap_mods:%=%.o)
 test:
-	gcc test_mincountmap.c mincountmap.c libghthash/hash_functions.c
+	gcc test_pcsamap.c pcsamap.c libghthash/hash_functions.c -lm
 
 
 clean::
