@@ -65,7 +65,7 @@ class SimpleSwitchApplication(eBPFCoreApplication):
 
     @set_event_handler(Header.NOTIFY)
     def notify_event(self, connection, pkt):
-        ip, num_packets, lasttime, stage = struct.unpack('<IIII', pkt.data)
+        ip, num_packets, lasttime, stage = struct.unpack('<IiII', pkt.data)
 
         if(not int2ip(ip) in self.counter):
             #ret_values = self.counter[int2ip(ip)]

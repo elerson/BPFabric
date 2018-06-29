@@ -6,6 +6,7 @@
 
 #include "karymap.h"
 #include "libghthash/ght_hash_table.h"
+#include "heap_sort.h"
 
 
 uint32_t karyhash(uint32_t key, uint32_t param1, uint32_t param2){
@@ -32,7 +33,7 @@ struct bpf_map *kary_map_alloc(union bpf_attr *attr)
         return NULL;
     }
 
-    elem_size = attr->value_size*sizeof(uint32_t);
+    elem_size = attr->value_size*sizeof(int64_t);
     /* allocate the mincountmap structure*/
     mincountmap = calloc(attr->max_entries * elem_size, sizeof(*mincountmap));
     
@@ -62,24 +63,42 @@ void kary_map_free(struct bpf_map *map)
 void *kary_map_lookup_elem(struct bpf_map *map, void *key)
 {
     //printf("find %d\n", *((uint32_t*) key));
-    uint32_t index, hash_value, i;
+    uint32_t index, hash_value, i, j;
     
-    uint32_t* ret = calloc(1, sizeof(uint32_t));
-    *ret = 0xFFFFFFFF;
-    uint32_t *ptr;
-    struct bpf_array *array = container_of(map, struct bpf_array, map);
-    uint num_elements = array->map.value_size/sizeof(uint32_t);
+    uint32_t* ret = calloc(1, sizeof(int64_t));
 
+    *ret = 0xFFFFFFFF;
+    int64_t *ptr;
+    struct bpf_array *array = container_of(map, struct bpf_array, map);
+    uint num_elements = array->map.value_size/sizeof(int64_t);
+
+    uint  num_ret_values = array->map.max_entries*array->elem_size;
+    int64_t* return_vect = calloc(num_ret_values, sizeof(int64_t));
+
+    j = 0;
     for (index = 0; index < array->map.max_entries; index++ ){
-    	ptr = (uint32_t*) array->value + array->map.value_size*index;
+    	ptr = (int64_t*) array->value + array->map.value_size*index;
     	for (i = 0; i < array->elem_size; i++)
         {
     	    hash_value = karyhash(*((uint32_t*) key), index, i)%(num_elements);
             //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
-    	    *ret = *ret < ptr[hash_value]? *ret : ptr[hash_value];
+    	    return_vect[j++] = ptr[hash_value];
+            //printf("%d ", ptr[hash_value]);
+
         }
         //printf("\n");
     }
+    heap_sort(return_vect, num_ret_values);
+    *ret = return_vect[(int64_t)num_ret_values/2];
+    /*for (j = 0; j < num_ret_values; j++){
+        printf("%d ", return_vect[j]);
+    }
+    printf("\n");*/
+
+    free(return_vect);    
+
+
+
     //printf("found %d\n", *ret);
     return ret;
 }
@@ -109,7 +128,7 @@ int kary_map_update_elem(struct bpf_map *map, void *key, void *value,
     //Clean the mincountmap fields 
     uint32_t i, index;
     uint32_t hash_value;
-    uint32_t *ptr;
+    int64_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     uint num_elements = array->map.value_size/sizeof(uint32_t);
     //printf("(%d)", (value));
@@ -117,7 +136,7 @@ int kary_map_update_elem(struct bpf_map *map, void *key, void *value,
     {   printf("clean \n");
         for (index = 0; index < array->map.max_entries; index++ )
         {   
-            ptr = (uint32_t*) array->value + array->map.value_size*index;
+            ptr = (int64_t*) array->value + array->map.value_size*index;
             for (i = 0; i < num_elements; i++)
             {
                 ptr[i] = 0;            
@@ -128,13 +147,15 @@ int kary_map_update_elem(struct bpf_map *map, void *key, void *value,
 
     
     for (index = 0; index < array->map.max_entries; index++ ){
-        ptr = (uint32_t*) array->value + array->map.value_size*index;
+        ptr = (int64_t*) array->value + array->map.value_size*index;
         for (i = 0; i < array->elem_size; i++)
         {
             hash_value = karyhash(*((uint32_t*) key), index, i)%(num_elements);
             ptr[hash_value] += *((int*) value);
+            //printf("%d ", ptr[hash_value]);
         }
     }
+    
     return 0;
 }
 
@@ -151,23 +172,25 @@ int kary_map_diff_elem(struct bpf_map *map_dest, struct bpf_map *map_src1, struc
     struct bpf_array *array_src2 = container_of(map_src2, struct bpf_array, map);
  
     uint32_t i, index;
-    uint32_t *ptr_dst, *ptr_src1, *ptr_src2;
+    int64_t *ptr_dst, *ptr_src1, *ptr_src2;
     uint num_elements = array_dst->map.value_size/sizeof(uint32_t);
 
-
+    printf("%d %d \n", map_src1, map_src2);
     for (index = 0; index < array_dst->map.max_entries; index++ )
     {   
-        ptr_dst  = (uint32_t*) array_dst->value  + array_dst->map.value_size*index;
-        ptr_src1 = (uint32_t*) array_src1->value + array_src1->map.value_size*index;
-        ptr_src2 = (uint32_t*) array_src2->value + array_src2->map.value_size*index;
+        ptr_dst  = (int64_t*) array_dst->value  + array_dst->map.value_size*index;
+        ptr_src1 = (int64_t*) array_src1->value + array_src1->map.value_size*index;
+        ptr_src2 = (int64_t*) array_src2->value + array_src2->map.value_size*index;
 
 
         for (i = 0; i < num_elements; i++)
         {
             ptr_dst[i] = ptr_src1[i] - ptr_src2[i];
-            //printf("update (%d %d %d)\n", ptr_src1[i] - ptr_src2[i], ptr_src1[i], ptr_src2[i]);          
+            if( ptr_dst[i] > 4294961370)
+                printf("%ld ",  ptr_dst[i]);          
         }
     }
+    printf("\n\n\n\n\n\n\n\n");
 
     return 0;
 }
