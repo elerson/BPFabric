@@ -10,7 +10,7 @@ int main() {
         .map_type = BPF_MAP_TYPE_PCSA,
         .key_size = sizeof(uint32_t),
         .value_size = 1,
-        .max_entries = 256,
+        .max_entries = 128,
         .map_flags = 0,
     };
 
@@ -25,7 +25,7 @@ int main() {
     }
 
     uint64_t i;
-    for(i = 0; i < 1000000; i++){
+    for(i = 0; i < 10000000; i++){
         int key1 = i;
         pcsa_map_update_elem(pcsa_map, &key1, NULL, BPF_ANY);
         uint32_t *ret = pcsa_map_lookup_elem(pcsa_map, NULL);

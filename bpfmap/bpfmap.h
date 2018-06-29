@@ -39,7 +39,8 @@ enum bpf_map_type {
     BPF_MAP_TYPE_PERF_EVENT_ARRAY,    
     BPF_MAP_TYPE_BITMAP,
     BPF_MAP_TYPE_MINCOUNT,
-    BPF_MAP_TYPE_PCSA
+    BPF_MAP_TYPE_PCSA,
+    BPF_MAP_TYPE_KARY
 };
 
 union bpf_attr {
@@ -71,6 +72,7 @@ struct bpf_map_ops {
     void *(*map_lookup_elem)(struct bpf_map *map, void *key);
     int (*map_update_elem)(struct bpf_map *map, void *key, void *value, uint64_t flags);
     int (*map_delete_elem)(struct bpf_map *map, void *key);
+    int (*map_diff_map_elem)(struct bpf_map *map_dest, struct bpf_map *map_src1, struct bpf_map *map_src2, uint32_t flag);
 };
 
 struct bpf_map {
@@ -105,5 +107,6 @@ int bpf_update_elem(int map, void *key, void *value, unsigned long long flags);
 int bpf_lookup_elem(int map, void *key, void *value);
 int bpf_delete_elem(int map, void *key);
 int bpf_get_next_key(int map, void *key, void *next_key);
+int bpf_diff_elem(int map_dest, int map_src1, int map_src2, int flag);
 
 #endif

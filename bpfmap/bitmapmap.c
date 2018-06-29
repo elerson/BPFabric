@@ -91,7 +91,7 @@ int bitmap_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
                  uint64_t map_flags)
 {
-    //printf("update %d\n", *((uint32_t*) key));
+    printf("update %d %d\n", *((uint32_t*) key), map_flags);
     if (map_flags > BPF_EXIST) {
         /* unknown flags */
         errno = EINVAL;

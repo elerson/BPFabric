@@ -550,6 +550,11 @@ uint64_t bpf_update(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t
     return bpf_update_elem(r1, r2, r3, r4);
 }
 
+uint64_t bpf_diff(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r5)
+{
+    return bpf_diff_elem(r1, r2, r3, r4);
+}
+
 uint64_t bpf_delete(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r5)
 {
     return bpf_delete_elem(r1, r2);
@@ -582,6 +587,7 @@ void *agent_task()
     ubpf_register(vm, 1, "bpf_map_lookup_elem", bpf_lookup);
     ubpf_register(vm, 2, "bpf_map_update_elem", bpf_update);
     ubpf_register(vm, 3, "bpf_map_delete_elem", bpf_delete);
+    ubpf_register(vm, 30, "bpf_map_diff_elem", bpf_diff);
     ubpf_register(vm, 31, "bpf_notify", bpf_notify);
     ubpf_register(vm, 32, "bpf_debug", bpf_debug);
 

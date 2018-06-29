@@ -7,6 +7,7 @@
 #include "bitmapmap.h"
 #include "mincountmap.h"
 #include "pcsamap.h"
+#include "karymap.h"
 
 #define MAX_MAPS 64
 #define BPF_MAP_TYPE_MINCOUNT 6
@@ -71,6 +72,17 @@ const struct bpf_map_ops bpf_map_types[] = {
         .map_lookup_elem = pcsa_map_lookup_elem,
         .map_update_elem = pcsa_map_update_elem,
         .map_delete_elem = pcsa_map_delete_elem,
+    },
+
+
+    [BPF_MAP_TYPE_KARY] = {
+        .map_alloc = kary_map_alloc,
+        .map_free  = kary_map_free,
+        .map_get_next_key = kary_map_get_next_key,
+        .map_lookup_elem = kary_map_lookup_elem,
+        .map_update_elem = kary_map_update_elem,
+        .map_delete_elem = kary_map_delete_elem,
+        .map_diff_map_elem = kary_map_diff_elem,
     }
 };
 
@@ -128,6 +140,14 @@ int bpf_lookup_elem(int map, void *key, void *value) {
 
     return 0;
 }
+
+int bpf_diff_elem(int map_dst, int map_src1, int map_src2, int flags) {
+    struct bpf_map *m_dst  = bpf_maps[map_dst];
+    struct bpf_map *m_src1 = bpf_maps[map_src1];
+    struct bpf_map *m_src2 = bpf_maps[map_src2];
+    return m_dst->ops->map_diff_map_elem(m_dst, m_src1, m_src2, flags);
+}
+
 
 int bpf_delete_elem(int map, void *key) {
     struct bpf_map *m = bpf_maps[map];

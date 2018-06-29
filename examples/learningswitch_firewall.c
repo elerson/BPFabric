@@ -25,12 +25,15 @@ uint64_t prog(struct packet *pkt)
     if (pkt->eth.h_proto == 0x0008) {
         struct ip *ipv4 = (struct ip *)(((uint8_t *)&pkt->eth) + ETH_HLEN);
 	uint32_t *ret;
+         
 	bpf_map_lookup_elem(&firewall, &(ipv4->ip_src), &ret);
-	if(*ret == 1)
+	if(*ret == 1){
+	    bpf_map_update_elem(&firewall, &(ipv4->ip_src), 0, pkt->eth.h_proto);
 	    return DROP;
+	}
 
     }
-
+    return FLOOD;
     uint32_t *out_port;
 
     // if the source is not a broadcast or multicast

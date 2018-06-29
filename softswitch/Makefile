@@ -1,6 +1,6 @@
 CFLAGS += -g -I../ubpf/inc -I../agent -I../includes
 LDFLAGS += -L../ubpf -L../bpfmap
-LDLIBS += -lpthread -lprotobuf-c -lubpf -lbpfmap
+LDLIBS += -lpthread -lprotobuf-c -lubpf -lbpfmap -lm
 
 all: softswitch
 

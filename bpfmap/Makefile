@@ -5,13 +5,14 @@ PREFIX=/usr/local
 
 -include bpfmap-env.mk
 
-all:: libbpfmap.a
+all:: libbpfmap.a -lm
 
 bpfmap_mods += bpfmap
 bpfmap_mods += arraymap
 bpfmap_mods += hashtab
 bpfmap_mods += bitmapmap
 bpfmap_mods += mincountmap
+bpfmap_mods += karymap
 bpfmap_mods += pcsamap
 bpfmap_mods += test_arraymap
 bpfmap_mods += libghthash/hash_functions
