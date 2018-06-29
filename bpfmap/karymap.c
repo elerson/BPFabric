@@ -164,7 +164,8 @@ int kary_map_diff_elem(struct bpf_map *map_dest, struct bpf_map *map_src1, struc
 
         for (i = 0; i < num_elements; i++)
         {
-            ptr_dst[i] = ptr_src1[i] - ptr_src2[i];            
+            ptr_dst[i] = ptr_src1[i] - ptr_src2[i];
+            //printf("update (%d %d %d)\n", ptr_src1[i] - ptr_src2[i], ptr_src1[i], ptr_src2[i]);          
         }
     }
 

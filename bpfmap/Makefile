@@ -22,7 +22,7 @@ bpfmap_mods += libghthash/hash_table
 libbpfmap.a: $(bpfmap_mods:%=%.o)
 	$(AR) r '$@' $(bpfmap_mods:%=%.o)
 test:
-	gcc test_pcsamap.c pcsamap.c libghthash/hash_functions.c -lm
+	gcc test_karymap.c karymap.c libghthash/hash_functions.c -lm
 
 
 clean::
