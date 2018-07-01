@@ -53,8 +53,7 @@ struct bpf_map *pcsa_map_alloc(union bpf_attr *attr)
     uint32_t elem_size;
    
     /* check sanity of attributes */
-    if (attr->max_entries == 0 || attr->key_size != sizeof(uint32_t) ||
-        attr->value_size == 0 || attr->map_flags) {
+    if (attr->max_entries == 0 || attr->key_size != sizeof(uint32_t) || attr->map_flags) {
         errno = EINVAL;
         return NULL;
     }

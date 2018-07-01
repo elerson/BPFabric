@@ -3,10 +3,14 @@
 #include "ebpf_switch.h"
 #define BPF_MAP_TYPE_MINCOUNT 6
 
+#define COLS_ 500
+#define HASHES_ 2
+#define PHI_ 100000000
+
 struct bpf_map_def SEC("maps") sketch_count = {
         .type = BPF_MAP_TYPE_MINCOUNT,
-        .num_hashes = 2,            // hash for each row
-        .num_cols = 500,          // table colums
+        .num_hashes = HASHES_,            // hash for each row
+        .num_cols = COLS_,          // table colums
         .num_rows = 1,           // table rows
 };
 
@@ -31,6 +35,9 @@ struct arrival_stats {
     uint32_t ip;
     uint32_t real_count;
     uint32_t sketch_count;
+    uint32_t hashes;
+    uint32_t cols;
+    uint32_t phi;
     uint32_t lasttime;
 };
 
@@ -64,9 +71,12 @@ uint64_t prog(struct packet *pkt)
 		bpf_map_lookup_elem(&sketch_count2, &(ipv4->ip_src), &result_real);
 
 
-		if(*result_real > 100000000){
+		if(*result_real > PHI_){
 		   stats->sketch_count = *result_sketch;
 		   stats->real_count = *result_real;
+		   stats->hashes = HASHES_;
+		   stats->cols = COLS_;
+		   stats->phi  = PHI_;
 		   stats->ip = *((uint32_t*) &(ipv4->ip_src));
 		   bpf_notify(0, stats, sizeof(struct arrival_stats));
 		}

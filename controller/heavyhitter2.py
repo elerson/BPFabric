@@ -58,7 +58,7 @@ class SimpleSwitchApplication(eBPFCoreApplication):
 
     @set_event_handler(Header.NOTIFY)
     def notify_event(self, connection, pkt):
-        ip, count_sketch, count_real, lasttime = struct.unpack('<IIII', pkt.data)
+        ip, count_real, count_sketch,hashes, cols, phi, lasttime = struct.unpack('<IIII', pkt.data)
         
         self.mean_ += float(count_real-count_sketch)/count_real
         self.num_calls +=1
