@@ -45,7 +45,7 @@ uint64_t prog(struct packet *pkt)
 
 	
 
-	uint32_t length = ipv4->ip_len;//pkt->metadata.length;
+	uint32_t length = (uint32_t) ((uint16_t) (ipv4->ip_len << 8) | ((ipv4->ip_len >> 8) & 0xFF));//pkt->metadata.length;
 	bpf_map_update_elem(&stats, &(ipv4->ip_src), &length, 0);
 
 	

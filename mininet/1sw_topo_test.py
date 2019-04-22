@@ -15,7 +15,7 @@ from time import sleep
 import socket
  
 UDP_IP = "127.0.0.1"
-UDP_PORT = 5007
+UDP_PORT = 50005
 MESSAGE = "EXP"
  
 
@@ -51,8 +51,11 @@ def main():
 
     h1 = net.get('h1')  
     result = h1.cmd('./pcap.sh')
-    print 'teste'
+    print 'finshing'
+    sleep(120)
+    
     sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
+    print 'finshed'
     exit()
     #result = h1.cmd('pcap.sh')
     CLI(net)

@@ -75,9 +75,9 @@
 
 #define RTE_LOGTYPE_L2FWD RTE_LOGTYPE_USER1
 
-#define NB_MBUF   8192
+#define NB_MBUF   32768
 
-#define MAX_PKT_BURST 32
+#define MAX_PKT_BURST 64
 #define BURST_TX_DRAIN_US 100 /* TX drain every ~100us */
 
 /*
@@ -104,8 +104,8 @@ struct mbuf_table {
     struct rte_mbuf *m_table[MAX_PKT_BURST];
 };
 
-#define MAX_RX_QUEUE_PER_LCORE 16
-#define MAX_TX_QUEUE_PER_PORT 16
+#define MAX_RX_QUEUE_PER_LCORE 64
+#define MAX_TX_QUEUE_PER_PORT 64
 struct lcore_queue_conf {
     unsigned n_rx_port;
     unsigned rx_port_list[MAX_RX_QUEUE_PER_LCORE];

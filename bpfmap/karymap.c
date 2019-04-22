@@ -9,6 +9,7 @@
 #include "heap_sort.h"
 
 
+
 uint32_t karyhash(uint32_t key, uint32_t param1, uint32_t param2){
     //printf("hh %d %d %d\n", key, param1, key*7 + param1*13 + 31*param2);
     
@@ -109,6 +110,13 @@ int kary_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
     return -1;
 }
 
+//! Byte swap unsigned int
+uint32_t swap_uint32( uint32_t val )
+{
+    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF ); 
+    return (val << 16) | (val >> 16);
+}
+
 int kary_map_update_elem(struct bpf_map *map, void *key, void *value,
                  uint64_t map_flags)
 {
@@ -124,35 +132,37 @@ int kary_map_update_elem(struct bpf_map *map, void *key, void *value,
         errno = EEXIST;
         return -1;
     }
-   
+    
     //Clean the mincountmap fields 
     uint32_t i, index;
     uint32_t hash_value;
     int64_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     uint num_elements = array->map.value_size/sizeof(uint32_t);
+    
     //printf("(%d)", (value));
     if(map_flags == BPF_CLEAN)
     {   printf("clean \n");
-        for (index = 0; index < array->map.max_entries; index++ )
+        memset(array->value, 0, array->map.max_entries*num_elements*sizeof(uint32_t));
+        /*for (index = 0; index < array->map.max_entries; index++ )
         {   
             ptr = (int64_t*) array->value + array->map.value_size*index;
             for (i = 0; i < num_elements; i++)
             {
                 ptr[i] = 0;            
             }
-        }
+        }*/
         return 0;
     }
-
-    
+   
+    //printf("%d \n", *((uint32_t*)value));
     for (index = 0; index < array->map.max_entries; index++ ){
         ptr = (int64_t*) array->value + array->map.value_size*index;
         for (i = 0; i < array->elem_size; i++)
         {
             hash_value = karyhash(*((uint32_t*) key), index, i)%(num_elements);
-            ptr[hash_value] += *((int*) value);
-            //printf("%d ", ptr[hash_value]);
+            ptr[hash_value] += *((uint32_t*)value);
+            
         }
     }
     
@@ -186,8 +196,8 @@ int kary_map_diff_elem(struct bpf_map *map_dest, struct bpf_map *map_src1, struc
         for (i = 0; i < num_elements; i++)
         {
             ptr_dst[i] = ptr_src1[i] - ptr_src2[i];
-            if( ptr_dst[i] > 4294961370)
-                printf("%ld ",  ptr_dst[i]);          
+            //if( ptr_dst[i] > 100000 || ptr_dst[i] < -100000)
+                //printf("%ld ",  ptr_dst[i]);          
         }
     }
     printf("\n\n\n\n\n\n\n\n");

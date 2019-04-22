@@ -16,6 +16,7 @@
 #include <linux/if_ether.h>
 #include <linux/ip.h>
 #include <argp.h>
+//#include <netinet/ip.h>
 
 #include <time.h>
 
@@ -225,6 +226,8 @@ int tx_frame(struct port* port, void *data, int len) {
     if (v2_tx_kernel_ready(tx_ring->rd[tx_ring->frame_num].iov_base)) {
         union frame_map ppd_out;
         ppd_out.raw = tx_ring->rd[tx_ring->frame_num].iov_base;
+	struct iphdr *ipv4 = (struct iphdr *) ppd_out.raw;
+	//printf("%d \n", ipv4->version);
 
         // copy the packet from ppd to ppd_out
         // ppd_out.v2->tp_h.tp_snaplen = ppd.v2->tp_h.tp_snaplen;
@@ -438,6 +441,7 @@ int main(int argc, char **argv)
                 metadatahdr->sec = ppd.v2->tp_h.tp_sec;
                 metadatahdr->nsec = ppd.v2->tp_h.tp_nsec;
                 metadatahdr->length = (uint16_t)ppd.v2->tp_h.tp_len;
+		//printf("%d)) \n", metadatahdr->length);		
 
                 /* Here we have the packet and we can do whatever we want with it */
                 if (ubpf_fn != NULL) {

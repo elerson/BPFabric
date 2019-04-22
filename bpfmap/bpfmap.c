@@ -8,6 +8,7 @@
 #include "mincountmap.h"
 #include "pcsamap.h"
 #include "karymap.h"
+#include "foo_map.h"
 
 #define MAX_MAPS 64
 #define BPF_MAP_TYPE_MINCOUNT 6
@@ -83,6 +84,13 @@ const struct bpf_map_ops bpf_map_types[] = {
         .map_update_elem = kary_map_update_elem,
         .map_delete_elem = kary_map_delete_elem,
         .map_diff_map_elem = kary_map_diff_elem,
+    },
+
+    [BPF_MAP_TYPE_FOO] = {
+        .map_alloc = foo_map_alloc,
+        .map_free  = foo_map_free,
+        .map_lookup_elem = foo_map_lookup_elem,
+        .map_update_elem = foo_map_update_elem,
     }
 };
 

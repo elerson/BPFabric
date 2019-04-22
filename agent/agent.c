@@ -495,6 +495,16 @@ int agent_packetin(void *pkt, int len) {
     return 0;
 }
 
+uint64_t bpf_debug2(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r5)
+{
+    uint8_t *s = (char *)r1;
+    uint16_t i;
+    for (i = 0; i < r2; i++)
+	printf("%x ", s[i]);
+    printf("\n\n");
+    return 0;
+}
+
 uint64_t bpf_debug(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r5)
 {
     char *s = (char *)r1;
@@ -587,6 +597,7 @@ void *agent_task()
     ubpf_register(vm, 1, "bpf_map_lookup_elem", bpf_lookup);
     ubpf_register(vm, 2, "bpf_map_update_elem", bpf_update);
     ubpf_register(vm, 3, "bpf_map_delete_elem", bpf_delete);
+    ubpf_register(vm, 29, "bpf_debug2", bpf_debug2);
     ubpf_register(vm, 30, "bpf_map_diff_elem", bpf_diff);
     ubpf_register(vm, 31, "bpf_notify", bpf_notify);
     ubpf_register(vm, 32, "bpf_debug", bpf_debug);

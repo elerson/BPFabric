@@ -5,36 +5,38 @@
 #define BPF_MAP_TYPE_MINCOUNT 6
 #define BPF_MAP_TYPE_KARY 8
 
-#define NUMCOLS 10000
+#define NUMCOLS_ 10000
+#define NUMROWS_ 20
+#define PHI_ 100000
+
 
 struct bpf_map_def SEC("maps") stage0 = {
         .type = BPF_MAP_TYPE_KARY,
-        .num_hashes = 3,            // hash for each row
-        .num_cols = NUMCOLS,          // table colums
-        .num_rows = 20,           // table rows
+        .num_hashes = 1,            // hash for each row
+        .num_cols = NUMCOLS_,          // table colums
+        .num_rows = NUMROWS_,           // table rows
 };
 
 struct bpf_map_def SEC("maps") stage1 = {
         .type = BPF_MAP_TYPE_KARY,
-        .num_hashes = 3,            // hash for each row
-        .num_cols = NUMCOLS,          // table colums
-        .num_rows = 20,           // table rows
+        .num_hashes = 1,            // hash for each row
+        .num_cols = NUMCOLS_,          // table colums
+        .num_rows = NUMROWS_,           // table rows
 };
 
 struct bpf_map_def SEC("maps") stage2 = {
         .type = BPF_MAP_TYPE_KARY,
-        .num_hashes = 3,            // hash for each row
-        .num_cols = NUMCOLS,          // table colums
-        .num_rows = 20,           // table rows
+        .num_hashes = 1,            // hash for each row
+        .num_cols = NUMCOLS_,          // table colums
+        .num_rows = NUMROWS_,           // table rows
 };
 
 struct bpf_map_def SEC("maps") change = {
         .type = BPF_MAP_TYPE_KARY,
-        .num_hashes = 1,            // hash for each row
-        .num_cols = NUMCOLS,          // table colums
-        .num_rows = 20,           // table rows
+        .num_hashes = 1,                // hash for each row
+        .num_cols = NUMCOLS_,           // table colums
+        .num_rows = NUMROWS_,           // table rows
 };
-
 
 
 struct arrival_stats {
@@ -42,6 +44,10 @@ struct arrival_stats {
     int32_t change;
     uint32_t lasttime;
     uint32_t stage;
+    uint32_t cols;
+    uint32_t rows;
+    uint32_t phi;
+    uint32_t c;
 };
 
 struct bpf_map_def SEC("maps") count_stats = {
@@ -60,7 +66,7 @@ uint64_t prog(struct packet *pkt)
     struct ip *ipv4 = (struct ip *)(((uint8_t *)&pkt->eth));
     if (ipv4->ip_v == 4){
 
-	uint32_t length = ipv4->ip_len;//pkt->metadata.length;
+	uint32_t length = (uint32_t) ((uint16_t) (ipv4->ip_len << 8) | ((ipv4->ip_len >> 8) & 0xFF));//pkt->metadata.length;
 
 	struct arrival_stats *stats;
 	unsigned int key = 0;
@@ -82,9 +88,11 @@ uint64_t prog(struct packet *pkt)
 	bpf_map_lookup_elem(&change, &(ipv4->ip_src), &result);
 	
 	stats->change = (int32_t) *result;
-	if(stats->change > 1000000)
-	{
-		
+	if(stats->change > PHI_ && stats->c > 0)
+	{	
+		stats->cols = NUMCOLS_;
+                stats->rows = NUMROWS_;
+                stats->phi  = PHI_;	
 		stats->ip = *((uint32_t*) &(ipv4->ip_src));
 		bpf_notify(0, stats, sizeof(struct arrival_stats));
 	}
@@ -116,8 +124,10 @@ uint64_t prog(struct packet *pkt)
 			break;
 		}
 		stats->stage++;
-		if(stats->stage >= 3)
+		if(stats->stage >= 3){
 		    stats->stage = 0;
+                    stats->c++;
+		}
         }
 
     }

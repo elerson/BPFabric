@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "mincountmap.h"
 #include "libghthash/ght_hash_table.h"
@@ -114,15 +115,27 @@ int mincountmap_map_update_elem(struct bpf_map *map, void *key, void *value,
     uint num_elements = array->map.value_size/sizeof(uint32_t);
     //printf("(%d)", (value));
     if(map_flags == BPF_CLEAN)
-    {   printf("clean \n");
-        for (index = 0; index < array->map.max_entries; index++ )
+    {   printf("clean %d\n", array->map.max_entries);
+        //clock_t start, end;
+        //double cpu_time_used;
+     
+        //start = clock();
+     
+     
+        memset(array->value, 0, array->map.max_entries*num_elements*sizeof(uint32_t));
+        //end = clock();
+        //cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+
+        //printf("cleaned %f\n", cpu_time_used);
+        
+        /*for (index = 0; index < array->map.max_entries; index++ )
         {   
             ptr = (uint32_t*) array->value + array->map.value_size*index;
             for (i = 0; i < num_elements; i++)
             {
                 ptr[i] = 0;            
             }
-        }
+        }*/
         return 0;
     }
 

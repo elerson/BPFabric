@@ -40,7 +40,8 @@ enum bpf_map_type {
     BPF_MAP_TYPE_BITMAP,
     BPF_MAP_TYPE_MINCOUNT,
     BPF_MAP_TYPE_PCSA,
-    BPF_MAP_TYPE_KARY
+    BPF_MAP_TYPE_KARY,
+    BPF_MAP_TYPE_FOO
 };
 
 union bpf_attr {

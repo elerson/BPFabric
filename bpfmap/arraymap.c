@@ -33,7 +33,7 @@ struct bpf_map *array_map_alloc(union bpf_attr *attr)
     array->map.value_size = attr->value_size;
     array->map.max_entries = attr->max_entries;
     array->elem_size = elem_size;
-
+    
     return &array->map;
 }
 
@@ -46,12 +46,13 @@ void array_map_free(struct bpf_map *map)
 
 void *array_map_lookup_elem(struct bpf_map *map, void *key)
 {
+    
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     uint32_t index = *(uint32_t *)key;
-
+    //printf("look  %d\n", index);
     if (index >= array->map.max_entries)
         return NULL;
-
+    //printf("look  %d\n", *(uint32_t*) array->value + array->elem_size * index);
     return array->value + array->elem_size * index;
 }
 
@@ -78,9 +79,10 @@ int array_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 int array_map_update_elem(struct bpf_map *map, void *key, void *value,
                  uint64_t map_flags)
 {
+    
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     uint32_t index = *(uint32_t *)key;
-
+    //printf("created %d\n", index);
     if (map_flags > BPF_EXIST) {
         /* unknown flags */
         errno = EINVAL;
@@ -98,7 +100,7 @@ int array_map_update_elem(struct bpf_map *map, void *key, void *value,
         errno = EEXIST;
         return -1;
     }
-
+    //printf("(%d)", *((uint32_t*) value) );
     memcpy(array->value + array->elem_size * index,
            value, map->value_size);
 

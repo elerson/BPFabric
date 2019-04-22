@@ -24,10 +24,10 @@ uint64_t pcsahash(uint32_t key, uint32_t param1, uint32_t param2){
     p_key2.p_key = &new_key2;
     p_key2.i_size = sizeof(uint32_t);
 
-    uint64_t key2 = ght_one_at_a_time_hash(&p_key2);
+    uint64_t key2 = ght_crc_hash(&p_key2);
     key2 <<= 32;
 
-    return ght_one_at_a_time_hash(&p_key) |  key2;
+    return ght_crc_hash(&p_key) |  key2;
 }
 
 
@@ -35,7 +35,7 @@ uint32_t hash2(uint32_t key, uint32_t M){
     ght_hash_key_t p_key;
     p_key.p_key = &key;
     p_key.i_size = sizeof(uint32_t);
-    return ght_one_at_a_time_hash(&p_key) % M;
+    return ght_crc_hash(&p_key) % M;
 }
 
 uint64_t R(uint64_t x){
@@ -104,6 +104,7 @@ void *pcsa_map_lookup_elem(struct bpf_map *map, void *key)
     double mean = 1.0 * sum/array->map.max_entries;
     double phi = .77351;
     *ret = (int) (array->map.max_entries * pow(2, mean)/phi);
+    //printf("%d\n", *ret);
     return ret;
 }
 
