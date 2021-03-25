@@ -25,7 +25,7 @@ def ip2long(ip):
 iplist = ['10.0.1.10', '10.0.4.10']
 
 UDP_IP = "127.0.0.1"
-UDP_PORT = 60035
+UDP_PORT = 50005
 
 class SimpleSwitchApplication(eBPFCoreApplication):
 
@@ -36,15 +36,14 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         self.counter = {}
 
         #atexit.register(self.sigint_handler)
-        self.file = open('heavychange.txt','a') 
+        self.file = open('heavyhitter.txt','a') 
         self.last = 0
         self.num_calls = 1
         self.mean_ = 0
         self.hashes_ = 0
         self.cols_   = 0
-        self.rows_   = 0
         self.phi_    = 0
-        self.last_phi = 0
+
 
         self.count_real_ = {}
         self.count_sketch_ = {}   
@@ -58,7 +57,7 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             t.start()
         
 
-        with open('../examples/tp_heavychange_3.o', 'rb') as f:
+        with open('../examples/tp_heavyhitter_3.o', 'rb') as f:
             print("Installing the eBPF ELF")
             connection.send(InstallRequest(elf=f.read()))
 
@@ -68,34 +67,32 @@ class SimpleSwitchApplication(eBPFCoreApplication):
 
     @set_event_handler(Header.NOTIFY)
     def notify_event(self, connection, pkt):
-
-        ip_, change, lastime, stage, cols, rows, phi, c = struct.unpack('<IiIIIIII', pkt.data)
+        ip_, count_sketch, hashes, cols, phi, lasttime = struct.unpack('<IIIIII', pkt.data)
         
         ip = int2ip(ip_)
         try:
-            if(abs(change) > phi):
-                self.count_sketch_[ip] = max(self.count_sketch_[ip], abs(change))
+            if(count_sketch > phi):
+                self.count_sketch_[ip] = max(self.count_sketch_[ip], count_sketch)
         except:
-            if(abs(change) > phi):
-                self.count_sketch_[ip] = change
-        	print(len(self.count_sketch_.keys()), 'saved')
-        self.last_phi = phi
+            if(count_sketch > phi):
+                self.count_sketch_[ip] = count_sketch
+                print('new', len(self.count_sketch_.keys()))
+
         self.cols_   = cols
-        self.rows_   = rows
         self.phi_    = phi
-        #self.hashes_ = hashes
+        self.hashes_ = hashes
 
     def sigint_handler(self):
 
         while True:
             data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
             print(self.mean_/self.num_calls, 'test')
-            self.file.write (str(self.rows_)+'_'+str(self.cols_)+'_'+str(self.phi_)+',' +str(len(self.count_sketch_.keys())) +'\n')
+            self.file.write (str(self.cols_)+','+ str(self.phi_) +','+ str(self.hashes_)+',' +str(len(self.count_sketch_.keys())) +'\n')
             self.file.flush()
 
-            with open(str(self.rows_)+'_'+str(self.cols_)+'_'+str(self.phi_)+'_heavychange.json', 'w') as fp:
+            with open(str(self.hashes_)+'_'+str(self.cols_)+'_'+str(self.phi_)+'_heavyhitter.json', 'w') as fp:
                 json.dump(self.count_sketch_, fp)
-                print(len(self.count_sketch_.keys()), 'saved final')
+                print(len(self.count_sketch_.keys()), 'saved')
 
             self.count_sketch_ = {}
 
