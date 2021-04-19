@@ -136,9 +136,11 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             rcv_data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
             
             if(rcv_data[0] == '1'):
-                print(rcv_data.split('_'))
-                DIR = os.getcwd()+'/'+rcv_data.split('-')[1].split('.')[0]+'/'
-                print('dir', DIR)
+                rcv_str = rcv_data.split('-')[1].split('.')[0]
+                #print(rcv_data.split('-'))
+                PREFIX= rcv_str.split('#')[0]
+                DIR = os.getcwd()+'/'+rcv_str.split('#')[1]+'/'
+                print('dir', DIR, PREFIX)
                 try:
                     os.mkdir(DIR)
                 except:
@@ -149,10 +151,10 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             exec_time = self.getExecutionTime()
             more_info = [self.hashes, self.cols, self.phi, self.rows]
             
-            name_  = 'data_'+str(self.hashes)+'_'+ str(self.cols) +'_'+ str(self.rows) +'_'+ str(self.phi) +'_';
+            name_  = 'data_'+PREFIX+str(self.hashes)+'_'+ str(self.cols) +'_'+ str(self.rows) +'_'+ str(self.phi) +'_';
             files_ = glob.glob(DIR + name_ + '*')
             print('files', files_)
-            file_name = DIR + 'data_'+str(self.hashes)+'_'+ str(self.cols) +'_'+ str(self.rows) +'_'+ str(self.phi) +'_'+str(1+len(files_))+'.json'
+            file_name = DIR + name_ +str(1+len(files_))+'.json'
             
             self.data['info'] = {"memory": mem_, "exec_time": exec_time, "more": more_info}
             with open(file_name, 'w') as fp:

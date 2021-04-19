@@ -32,8 +32,9 @@ for hash in ${hashes[@]}; do
                  sudo mn -c
                  sudo killall softswitch
                  cd mininet
-                 sudo python2.7 distributed_sw_topo_generic.py journal_heavyhitter_type_1_IV.c
+                 sudo python2.7 distributed_sw_topo_generic.py "${type_}_${num_heavy}_${time_}_#journal_heavyhitter_type_1_IV.c"
                  cd ..
+                 #echo "${type_}_${num_heavy}_${time_}_#journal_heavyhitter_type_1_IV.c"
               done
 	    done
 	  done
