@@ -17,12 +17,16 @@
 #include <linux/ip.h>
 #include <argp.h>
 //#include <netinet/ip.h>
-
+#define TIME_DEBUG 1
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/time.h>
 #include <time.h>
 
 #include "ubpf.h"
 #include "agent.h"
 #include "ebpf_consts.h"
+#include "utils.h"
 
 #ifndef likely
     #define likely(x)        __builtin_expect(!!(x), 1)
@@ -55,6 +59,7 @@ struct port {
 struct dataplane {
     unsigned long long dpid;
     int port_count;
+    int type;
     struct port *ports;
 } dataplane;
 
@@ -68,9 +73,26 @@ union frame_map {
     void *raw;
 };
 
+uint64_t total_time = 0, total_time_squared = 0;
+uint64_t total_time_count = 0;
+
+static void siguser1(int num)
+{  
+    #ifdef TIME_DEBUG
+
+    char buffer[50];
+    pid_t pid = getpid();
+    sprintf(buffer, "/tmp/SWITCH_TIME%u", pid);
+
+    printf("SAVE DATA ...\n");
+    saveLog2(buffer, total_time/total_time_count, total_time_squared/total_time_count);
+    #endif
+}
+
+
 static void sighandler(int num)
-{
-    sigint = 1;
+{   
+   sigint = 1;
 }
 
 static void voidhandler(int num) {} // NOTE: do nothing prevent mininet from killing the softswitch
@@ -265,6 +287,7 @@ static struct argp_option options[] = {
     {"verbose",  'v',      0,      0, "Produce verbose output" },
     {"dpid"   ,  'd', "dpid",      0, "Datapath id of the switch"},
     {"controller", 'c', "address", 0, "Controller address default to 127.0.0.1:9000"},
+    {"switch_type",  's', "switch_type",      0, "Datapath id of the switch"},
     { 0 }
 };
 
@@ -276,13 +299,14 @@ struct arguments
     int interface_count;
     unsigned long long dpid;
     char *controller;
-
+    int type;
     int verbose;
 };
 
 static error_t
 parse_opt(int key, char *arg, struct argp_state *state)
 {
+    //printf("ARG %s\n", arg);
     struct arguments *arguments = state->input;
 
     switch (key)
@@ -293,6 +317,10 @@ parse_opt(int key, char *arg, struct argp_state *state)
 
         case 'd':
             arguments->dpid = strtoull(arg, NULL, 10);
+            break;
+         
+        case 's':
+            arguments->type = atoi(arg);
             break;
 
         case 'c':
@@ -367,7 +395,7 @@ void transmit(struct metadatahdr *buf, int len, uint32_t port, int flags) {
 
         default:
             // printf("Forwarding the packet\n");
-            // printf("in_port %d out_port %lu data_len %lu\n", buf->in_port, port, len - sizeof(struct metadatahdr));
+            //printf("in_port %d out_port %lu data_len %lu\n", buf->in_port, port, len - sizeof(struct metadatahdr));
             tx_frame(&dataplane.ports[port], eth_frame, eth_len);
     }
 }
@@ -375,7 +403,9 @@ void transmit(struct metadatahdr *buf, int len, uint32_t port, int flags) {
 int main(int argc, char **argv)
 {
     int i;
-
+    /*for(i = 0; i < argc; ++i){
+        printf("ARG %d %s\n", i, argv[i]);
+    }*/
     /* Argument Parsing */
     struct arguments arguments;
     arguments.interface_count = 0;
@@ -387,16 +417,20 @@ int main(int argc, char **argv)
     dataplane.dpid = arguments.dpid;
     dataplane.port_count = arguments.interface_count;
     dataplane.ports = calloc(dataplane.port_count, sizeof(struct port));
-
+    dataplane.type = arguments.type;
+    
+    printf("type %d\n", arguments.type);
     /* */
     struct pollfd pfds[dataplane.port_count];
 
     // signal(SIGINT, sighandler);
     signal(SIGINT, voidhandler);
     signal(SIGKILL, sighandler);
+    signal(SIGUSR1, siguser1);
 
     /* setup all the interfaces */
     printf("Setting up %d interfaces\n", dataplane.port_count);
+    printf("Setting up %s address\n",  arguments.controller);
     for (i = 0; i < dataplane.port_count; i++) {
         // Create the socket, allocate the tx and rx rings and create the frame io vectors
         setup_socket(&dataplane.ports[i], arguments.interfaces[i]);
@@ -407,7 +441,7 @@ int main(int argc, char **argv)
         pfds[i].revents = 0;
 
         //
-        printf("Interface %s, index %d, fd %d\n", arguments.interfaces[i], i, dataplane.ports[i].fd);
+        printf("Interface %s, index %d, fd %d dip %lld\n", arguments.interfaces[i], i, dataplane.ports[i].fd, arguments.dpid);
     }
     printf("\n");
 
@@ -415,7 +449,8 @@ int main(int argc, char **argv)
     ubpf_jit_fn ubpf_fn = NULL;
     struct agent_options options = {
         .dpid = dataplane.dpid,
-        .controller = arguments.controller
+        .controller = arguments.controller,
+        .type = arguments.type
     };
 
     agent_start(&ubpf_fn, (tx_packet_fn)transmit, &options);
@@ -445,9 +480,27 @@ int main(int argc, char **argv)
 
                 /* Here we have the packet and we can do whatever we want with it */
                 if (ubpf_fn != NULL) {
+                   #ifdef TIME_DEBUG
+                      struct timespec start, end;
+                      clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+                   #endif
+                   
                     uint64_t ret = ubpf_fn(metadatahdr, ppd.v2->tp_h.tp_len + sizeof(struct metadatahdr));
+                   
+                   #ifdef TIME_DEBUG
+                      clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+                      uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+                      total_time += delta_us;
+                      total_time_squared += delta_us*delta_us;
+                      total_time_count += 1;
+                   #endif             
+                    uint32_t port1 = ret & 0xFFFFFFFF;
+                    uint32_t port2 = (ret>>32) & 0xFFFFFFFF;
+                    
                     // printf("bpf return value %lu\n", ret);
-                    transmit(metadatahdr, ppd.v2->tp_h.tp_len + sizeof(struct metadatahdr), (uint32_t)ret, 0);
+                    transmit(metadatahdr, ppd.v2->tp_h.tp_len + sizeof(struct metadatahdr), port1, 0);
+                    if(port2 != 0)
+                       transmit(metadatahdr, ppd.v2->tp_h.tp_len + sizeof(struct metadatahdr), port2, 0);
                 }
 
                 // Frame has been used, release the buffer space
@@ -464,6 +517,7 @@ int main(int argc, char **argv)
         // Poll for the next socket POLLIN or POLLERR
         poll(pfds, dataplane.port_count, -1);
     }
+
 
     /* House keeping */
     agent_stop();

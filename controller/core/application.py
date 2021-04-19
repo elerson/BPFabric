@@ -25,7 +25,7 @@ class eBPFCoreApplication(object):
         self.connections[connection.dpid] = connection
 
         # Send HELLO back
-        connection.send(Hello(version=1, dpid=0))
+        connection.send(Hello(version=1, dpid=0, type=0))
 
     def run(self):
         reactor.run()

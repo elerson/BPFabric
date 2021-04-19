@@ -33,6 +33,10 @@
 
 #define BPF_MAP_TYPE_BITMAP 5
 #define BPF_MAP_TYPE_MINCOUNT 6
+#define BPF_MAP_TYPE_MVSKETCH 9
+#define BPF_MAP_TYPE_ELASTIC 10
+#define BPF_MAP_TYPE_CUCKOO 11
+#define BPF_MAP_TYPE_LDSKETCH 12
 
 static sig_atomic_t sigint = 0;
 
@@ -56,7 +60,7 @@ void send_hello()
     header.type = HEADER__TYPE__HELLO;
     hello.version = 1;
     hello.dpid = agent.options->dpid;
-
+    hello.type = agent.options->type;
     //
     int packet_len = hello__get_packed_size(&hello);
     header.length = packet_len;
@@ -497,11 +501,13 @@ int agent_packetin(void *pkt, int len) {
 
 uint64_t bpf_debug2(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r5)
 {
-    uint8_t *s = (char *)r1;
+
+    printf("debug %ld %ld\n\n ", r1, r2);
+    /*uint8_t *s = (char *)r1;
     uint16_t i;
     for (i = 0; i < r2; i++)
 	printf("%x ", s[i]);
-    printf("\n\n");
+    printf("\n\n");*/
     return 0;
 }
 
@@ -522,6 +528,7 @@ uint64_t bpf_notify(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t
     Header header = HEADER__INIT;
 
     notify.id = id;
+    notify.dpid = agent.options->dpid;
     notify.data.data = payload;
     notify.data.len = len;
 
@@ -565,6 +572,17 @@ uint64_t bpf_diff(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r
     return bpf_diff_elem(r1, r2, r3, r4);
 }
 
+uint64_t bpf_heavy_change(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4)
+{
+    return bpf_heavy_change_elem(r1, r2, r3, r4);
+}
+
+
+uint64_t bpf_heavy_key(uint64_t r1, uint64_t r2, uint64_t r3)
+{
+    return bpf_heavy_key_elem(r1, r2, r3);
+}
+
 uint64_t bpf_delete(uint64_t r1, uint64_t r2, uint64_t r3, uint64_t r4, uint64_t r5)
 {
     return bpf_delete_elem(r1, r2);
@@ -597,6 +615,8 @@ void *agent_task()
     ubpf_register(vm, 1, "bpf_map_lookup_elem", bpf_lookup);
     ubpf_register(vm, 2, "bpf_map_update_elem", bpf_update);
     ubpf_register(vm, 3, "bpf_map_delete_elem", bpf_delete);
+    ubpf_register(vm, 27, "bpf_map_heavy_change_elem", bpf_heavy_change);
+    ubpf_register(vm, 28, "bpf_map_heavy_key_elem", bpf_heavy_key);
     ubpf_register(vm, 29, "bpf_debug2", bpf_debug2);
     ubpf_register(vm, 30, "bpf_map_diff_elem", bpf_diff);
     ubpf_register(vm, 31, "bpf_notify", bpf_notify);

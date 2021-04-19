@@ -5,6 +5,9 @@
 #include <errno.h>
 #include <time.h>
 
+#include "utils.h"
+#define DEBUG_ENV 1
+
 #include "mincountmap.h"
 #include "libghthash/ght_hash_table.h"
 
@@ -35,12 +38,17 @@ struct bpf_map *mincountmap_map_alloc(union bpf_attr *attr)
 
     elem_size = attr->value_size*sizeof(uint32_t);
     /* allocate the mincountmap structure*/
-    mincountmap = calloc(attr->max_entries * elem_size, sizeof(*mincountmap));
+    //mincountmap = calloc(attr->max_entries * elem_size, sizeof(*mincountmap));
+    mincountmap = malloc(attr->max_entries * elem_size + sizeof(*mincountmap) + sizeof(uint32_t));
     
     if (!mincountmap) {
         errno = ENOMEM;
         return NULL;
     }
+
+#ifdef DEBUG_ENV
+   saveLog("/tmp/MINCOUNT", attr->max_entries * elem_size );
+#endif
 
     /* copy mandatory map attributes */
     mincountmap->map.map_type = attr->map_type;
@@ -65,19 +73,22 @@ void *mincountmap_map_lookup_elem(struct bpf_map *map, void *key)
     //printf("find %d\n", *((uint32_t*) key));
     uint32_t index, hash_value, i;
     
-    uint32_t* ret = calloc(1, sizeof(uint32_t));
-    *ret = 0xFFFFFFFF;
+    
     uint32_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     uint num_elements = array->map.value_size/sizeof(uint32_t);
 
+    uint32_t* ret = (uint32_t*) array->value;//calloc(1, sizeof(uint32_t));
+    *ret = 0xFFFFFFFF;
+
     for (index = 0; index < array->map.max_entries; index++ ){
-    	ptr = (uint32_t*) array->value + array->map.value_size*index;
+    	//ptr = (uint32_t*) array->value + sizeof(uint32_t) + array->map.value_size*index;
+    	ptr = &((uint32_t*) (array->value + sizeof(uint32_t)))[num_elements*index];
     	for (i = 0; i < array->elem_size; i++)
         {
-    	    hash_value = mincounthash(*((uint32_t*) key), index, i)%(num_elements);
-            //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
+    	    hash_value = mincounthash(*((uint32_t*) key), index, i)%(num_elements);            
     	    *ret = *ret < ptr[hash_value]? *ret : ptr[hash_value];
+    	    //printf("look hash %d key %d ptr %p %d %d %d %d \n", hash_value, *((uint32_t*) key), ptr, index, num_elements, i, ptr[hash_value]);
         }
         //printf("\n");
     }
@@ -113,16 +124,18 @@ int mincountmap_map_update_elem(struct bpf_map *map, void *key, void *value,
     uint32_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     uint num_elements = array->map.value_size/sizeof(uint32_t);
-    //printf("(%d)", (value));
+    //printf("(%d)", (map_flags));
+    
     if(map_flags == BPF_CLEAN)
-    {   printf("clean %d\n", array->map.max_entries);
+    {   
+        printf("clean %d\n", array->map.max_entries);
         //clock_t start, end;
         //double cpu_time_used;
      
         //start = clock();
      
      
-        memset(array->value, 0, array->map.max_entries*num_elements*sizeof(uint32_t));
+        memset(array->value, 0, array->map.max_entries*num_elements*sizeof(uint32_t) +  sizeof(*array) + sizeof(uint32_t));
         //end = clock();
         //cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
@@ -138,14 +151,20 @@ int mincountmap_map_update_elem(struct bpf_map *map, void *key, void *value,
         }*/
         return 0;
     }
-
+    
+   
     
     for (index = 0; index < array->map.max_entries; index++ ){
-        ptr = (uint32_t*) array->value + array->map.value_size*index;
+        //ptr = (uint32_t*) array->value + sizeof(uint32_t) + array->map.value_size*index;
+        ptr = &((uint32_t*) (array->value + sizeof(uint32_t)))[num_elements*index];
         for (i = 0; i < array->elem_size; i++)
         {
             hash_value = mincounthash(*((uint32_t*) key), index, i)%(num_elements);
-            ptr[hash_value] += *((int*) value);
+            
+            //printf("lookup hash %d \n", hash_value);
+            ptr[hash_value] += 1;//*((int*) value);
+            //printf("look hash %d key %d ptr %p %d %d %d \n", hash_value, *((uint32_t*) key), ptr, index, num_elements, i);
+            
         }
     }
     return 0;

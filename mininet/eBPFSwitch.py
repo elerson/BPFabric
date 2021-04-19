@@ -21,11 +21,12 @@ class eBPFHost(Host):
 class eBPFSwitch(Switch):
     dpid = 1
 
-    def __init__(self, name, switch_path='softswitch', dpid=None, **kwargs):
+    def __init__(self, name, switch_path='softswitch', dpid=None, switch_type=0, **kwargs):
         Switch.__init__(self, name, **kwargs)
 
         self.switch_path = switch_path
-
+        self.switch_type = switch_type
+        
         if dpid:
             self.dpid = dpid
             eBPFSwitch.dpid = max(eBPFSwitch.dpid, dpid)
@@ -42,7 +43,7 @@ class eBPFSwitch(Switch):
 
         args = [self.switch_path]
 
-        args.extend(['--dpid', str(self.dpid)])
+        args.extend(['--dpid', str(self.dpid),'--switch_type', str(self.switch_type)])
 
         for port, intf in self.intfs.items():
             if not intf.IP():

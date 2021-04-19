@@ -25,7 +25,7 @@ class SingleSwitchTopo(Topo):
         Topo.__init__(self, **opts)
 
         switch = self.addSwitch('s1',
-            switch_path="../softswitch/softswitch")
+            switch_path="../softswitch/softswitch -c 1000")
 
         for h in xrange(1): #TODO number of hosts
             host = self.addHost('h%d' % (h + 1),

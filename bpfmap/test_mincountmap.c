@@ -9,7 +9,7 @@ int main() {
     union bpf_attr attr = {
         .map_type = BPF_MAP_TYPE_MINCOUNT,
         .key_size = 4,
-        .value_size = 1000,
+        .value_size = 10000,
         .max_entries = 2,
         .map_flags = 0,
     };
@@ -36,13 +36,17 @@ int main() {
     key1 = 40;
     mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
   
-    key1 =42;
+    key1 =41;
     stats = mincountmap_map_lookup_elem(mincount_map, &key1);
     printf("%d\n", *stats);
-    
+   
     int i;
-    for (i = 0; i < 10; i++){
+    for (i = 0; i < 100; i++){
       key1 = i;
+      mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
+      mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
+      mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
+      mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
       mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
       //printf("(%d) %d\n",i , *stats);
     }
@@ -52,7 +56,8 @@ int main() {
       mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_ANY);
       //printf("(%d) %d\n",i , *stats);
     }
-
+    
+    //mincountmap_map_update_elem(mincount_map, &key1, NULL, BPF_CLEAN);
     for (i = 0; i < 100; i++){
       key1 = i;
       stats = mincountmap_map_lookup_elem(mincount_map, &key1);

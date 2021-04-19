@@ -8,10 +8,19 @@
 #include "mincountmap.h"
 #include "pcsamap.h"
 #include "karymap.h"
+#include "mvsketchmap.h"
+#include "elasticmap.h"
+#include "cuckoofiltermap.h"
+#include "ldsketchmap.h"
 #include "foo_map.h"
 
 #define MAX_MAPS 64
+#define BPF_MAP_TYPE_BITMAP 5
 #define BPF_MAP_TYPE_MINCOUNT 6
+#define BPF_MAP_TYPE_MVSKETCH 9
+#define BPF_MAP_TYPE_ELASTIC 10
+#define BPF_MAP_TYPE_CUCKOO 11
+#define BPF_MAP_TYPE_LDSKETCH 12
 
 struct bpf_map *bpf_maps[MAX_MAPS] = {0};
 
@@ -86,6 +95,49 @@ const struct bpf_map_ops bpf_map_types[] = {
         .map_diff_map_elem = kary_map_diff_elem,
     },
 
+    [BPF_MAP_TYPE_MVSKETCH] = {
+        .map_alloc = mvsketch_map_alloc,
+        .map_free  = mvsketch_map_free,
+        .map_get_next_key = mvsketch_map_get_next_key,
+        .map_lookup_elem = mvsketch_map_lookup_elem,
+        .map_update_elem = mvsketch_map_update_elem,
+        .map_delete_elem = mvsketch_map_delete_elem,
+        .map_diff_map_elem = mvsketch_map_diff_elem,
+        .map_heavy_key_elem = mvsketch_map_heavy_key_elem,
+        .map_heavy_change_elem = mvsketch_map_heavy_change_elem
+    },
+    
+    [BPF_MAP_TYPE_ELASTIC] = {
+        .map_alloc = elasticmap_map_alloc,
+        .map_free  = elasticmap_map_free,
+        .map_get_next_key = elasticmap_map_get_next_key,
+        .map_lookup_elem = elasticmap_map_lookup_elem,
+        .map_update_elem = elasticmap_map_update_elem,
+        .map_delete_elem = elasticmap_map_delete_elem,
+        .map_heavy_key_elem = elasticmap_map_heavy_key_elem,
+        .map_heavy_change_elem = elasticmap_map_heavy_change_elem
+    },
+
+    [BPF_MAP_TYPE_CUCKOO] = {
+        .map_alloc = cuckoofilter_map_alloc,
+        .map_free  = cuckoofilter_map_free,
+        .map_get_next_key = cuckoofilter_map_get_next_key,
+        .map_lookup_elem = cuckoofilter_map_lookup_elem,
+        .map_update_elem = cuckoofilter_map_update_elem,
+        .map_delete_elem = cuckoofilter_map_delete_elem
+    },
+    
+   [BPF_MAP_TYPE_LDSKETCH] = {
+        .map_alloc = ldsketch_map_alloc,
+        .map_free  = ldsketch_map_free,
+        .map_get_next_key = ldsketch_map_get_next_key,
+        .map_lookup_elem = ldsketch_map_lookup_elem,
+        .map_update_elem = ldsketch_map_update_elem,
+        .map_delete_elem = ldsketch_map_delete_elem,
+        .map_heavy_key_elem = ldsketch_map_heavy_key_elem,
+        .map_heavy_change_elem = ldsketch_map_heavy_change_elem
+    },
+
     [BPF_MAP_TYPE_FOO] = {
         .map_alloc = foo_map_alloc,
         .map_free  = foo_map_free,
@@ -156,6 +208,18 @@ int bpf_diff_elem(int map_dst, int map_src1, int map_src2, int flags) {
     return m_dst->ops->map_diff_map_elem(m_dst, m_src1, m_src2, flags);
 }
 
+
+uint64_t bpf_heavy_key_elem(int map, void *keys, int phi) {
+    struct bpf_map *m_src  = bpf_maps[map];
+    return (uint64_t) m_src->ops->map_heavy_key_elem(m_src, keys, phi);
+}
+
+
+uint64_t bpf_heavy_change_elem(int map1, int map2, void *keys, int phi){
+    struct bpf_map *m_src_1  = bpf_maps[map1];
+    struct bpf_map *m_src_2  = bpf_maps[map2];
+    return (uint64_t)  m_src_1->ops->map_heavy_change_elem(m_src_1, m_src_2, keys, phi);
+}
 
 int bpf_delete_elem(int map, void *key) {
     struct bpf_map *m = bpf_maps[map];

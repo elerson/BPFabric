@@ -1,8 +1,8 @@
 #!/bin/bash
 
-rows=(20 30 40)
-cols=(100 500 1000 1500 2000 2500)
-phi=(10000 40000 70000 100000)
+rows=(20)
+cols=(100)
+phi=(10000)
 
 for rows_ in ${rows[@]}; do
   for cols_ in ${cols[@]}; do
@@ -12,7 +12,7 @@ for rows_ in ${rows[@]}; do
 	sudo mn -c
 	sudo killall softswitch
 	cd mininet
-	sudo python 1sw_topo_test.py
+	sudo python2.7 1sw_topo_test.py
 	cd ..
     done
   done

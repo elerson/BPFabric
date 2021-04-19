@@ -6,6 +6,7 @@ typedef void (*tx_packet_fn)(void *buf, int len, uint64_t out_port, int flags);
 struct agent_options {
     uint64_t dpid;
     char* controller;
+    int type;
 };
 
 int agent_start(ubpf_jit_fn *ubpf_fn, tx_packet_fn tx_fn, struct agent_options *opts);

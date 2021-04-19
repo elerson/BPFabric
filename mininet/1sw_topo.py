@@ -1,4 +1,3 @@
-0.241970571831
 #!/usr/bin/env python
 
 from mininet.net import Mininet
@@ -13,15 +12,16 @@ class SingleSwitchTopo(Topo):
     def __init__(self, **opts):
         # Initialize topology and default options
         Topo.__init__(self, **opts)
-
+       
+        arg = {'v':'1'}
         switch = self.addSwitch('s1',
-            switch_path="../softswitch/softswitch")
+            switch_path="../softswitch/softswitch",switch_type=0)
 
         for h in xrange(5): #TODO number of hosts
             host = self.addHost('h%d' % (h + 1),
                                 ip = "10.0.%d.10/24" % h,
                                 mac = '00:04:00:00:00:%02x' %h)
-
+            arg = dict(c="teste")
             self.addLink(host, switch)
 
 def main():

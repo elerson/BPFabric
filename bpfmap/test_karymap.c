@@ -10,14 +10,14 @@ int main() {
 
     union bpf_attr attr = {
         .map_type = BPF_MAP_TYPE_KARY,
-        .key_size = 4,
-        .value_size = 10,
-        .max_entries = 2,
+        .key_size = 6,
+        .value_size = 10000,
+        .max_entries = 10,
         .map_flags = 0,
     };
 
     // static struct bpf_map *array_map_alloc(union bpf_attr *attr);
-    struct bpf_map *kary_map_dst, *kary_map_src1, *kary_map_src2;
+    struct bpf_map *kary_map_dst, *kary_map_src1, *kary_map_src2, *kary_map_src3;
     kary_map_dst  = kary_map_alloc(&attr);
     kary_map_src1 = kary_map_alloc(&attr);
     kary_map_src2 = kary_map_alloc(&attr);
@@ -46,18 +46,19 @@ int main() {
     int i;
     for (i = 0; i < 10; i++){
       key1 = i;
-      value = i*i;
+      value = i*10;
       kary_map_update_elem(kary_map_src1, &key1, &value, BPF_ANY);
       //printf("(%d) %d\n",i , *stats);
     }
-    
+
     for (i = 0; i < 10; i++){
       key1 = i;
-      value = i;
+      value = 100*i;
       kary_map_update_elem(kary_map_src2, &key1, &value, BPF_ANY);
       //printf("(%d) %d\n",i , *stats);
     }
 
+   
     kary_map_diff_elem(kary_map_dst, kary_map_src2, kary_map_src1, 0);
     for (i = 0; i < 10; i++){
       key1 = i;

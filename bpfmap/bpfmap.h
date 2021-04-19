@@ -2,7 +2,6 @@
 #define __EBPF_BPFMAP_H
 
 #include <stdint.h>
-
 /* flags for BPF_MAP_UPDATE_ELEM command */
 #define BPF_ANY         0 /* create new element or update existing */
 #define BPF_NOEXIST     1 /* create new element if it didn't exist */
@@ -41,6 +40,10 @@ enum bpf_map_type {
     BPF_MAP_TYPE_MINCOUNT,
     BPF_MAP_TYPE_PCSA,
     BPF_MAP_TYPE_KARY,
+    BPF_MAP_TYPE_MVSKETCH,
+    BPF_MAP_TYPE_ELASTIC,
+    BPF_MAP_TYPE_CUCKOO,
+    BPF_MAP_TYPE_LDSKETCH,
     BPF_MAP_TYPE_FOO
 };
 
@@ -74,6 +77,8 @@ struct bpf_map_ops {
     int (*map_update_elem)(struct bpf_map *map, void *key, void *value, uint64_t flags);
     int (*map_delete_elem)(struct bpf_map *map, void *key);
     int (*map_diff_map_elem)(struct bpf_map *map_dest, struct bpf_map *map_src1, struct bpf_map *map_src2, uint32_t flag);
+    void *(*map_heavy_key_elem)(struct bpf_map *map, int *num_return_keys, int phi);
+    void *(*map_heavy_change_elem)(struct bpf_map *map1, struct bpf_map *map2, int *num_return_keys, int phi);
 };
 
 struct bpf_map {
@@ -103,11 +108,16 @@ struct bpf_array {
     };
 };
 
+
+
 int bpf_create_map(enum bpf_map_type map_type, int key_size, int value_size, int max_entries);
 int bpf_update_elem(int map, void *key, void *value, unsigned long long flags);
 int bpf_lookup_elem(int map, void *key, void *value);
 int bpf_delete_elem(int map, void *key);
 int bpf_get_next_key(int map, void *key, void *next_key);
 int bpf_diff_elem(int map_dest, int map_src1, int map_src2, int flag);
+uint64_t bpf_heavy_key_elem(int map, void *keys, int phi);
+uint64_t bpf_heavy_change_elem(int map1, int map2, void *keys, int phi);
+uint64_t bpf_get_memory_elem(int map);
 
 #endif

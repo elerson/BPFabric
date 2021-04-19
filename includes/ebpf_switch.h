@@ -11,6 +11,8 @@ struct bpf_map_def {
     union{
        unsigned int key_size;
        unsigned int num_hashes;
+       unsigned int num_heavy;
+       unsigned int phi;
     };
     union{
         unsigned int value_size;
@@ -24,5 +26,34 @@ struct bpf_map_def {
     
     unsigned int map_flags;
 };
+
+inline uint64_t MULTICAST_PORT(uint32_t port1, uint32_t port2){
+   if(port1 == port2){
+      return port1;
+   }
+
+   if(port2 == 0){
+      uint64_t port = port1;
+      port <<= 32;
+      port |= port2;
+      return port;
+   }
+   
+   uint64_t port = port2;
+   port <<= 32;
+   port |= port1;
+   return port;
+}
+
+
+inline uint64_t getMac(const unsigned char* mac){
+   uint64_t mac_num = 0;
+   for(int i = 0; i < ETH_ALEN ; i++){
+       mac_num <<= 8;
+       mac_num = mac_num | mac[i];
+   }
+   return mac_num;
+}
+
 
 #endif

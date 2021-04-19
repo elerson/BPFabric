@@ -9,8 +9,8 @@ int main() {
     union bpf_attr attr = {
         .map_type = BPF_MAP_TYPE_BITMAP,
         .key_size = 2,
-        .value_size = 64,
-        .max_entries = 2,
+        .value_size = 1004,
+        .max_entries = 1000,
         .map_flags = 0,
     };
 
@@ -24,15 +24,29 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    uint32_t key1 = 41;
+    uint32_t key1 = 3142392961;
     uint32_t *stats;
-
+    bitmap_map_update_elem(bitmap_map, &key1, NULL, 0);
     stats = bitmap_map_lookup_elem(bitmap_map, &key1);
     printf("%d\n", *stats);
-
-    bitmap_map_update_elem(bitmap_map, &key1, NULL, BPF_ANY);
-  
+    
+    return 0;
+    for(int i = 1; i < 200; i+=4){
+       key1 = i;
+       bitmap_map_update_elem(bitmap_map, &key1, NULL, BPF_ANY);
+    }
+     //bitmap_map_update_elem(bitmap_map, &key1, NULL, 2);
+    for(int i = 1; i < 200; i++){
+       key1 = i;
+       stats = bitmap_map_lookup_elem(bitmap_map, &key1);
+       printf("%d\n", *stats);
+    }
+     
     key1 =41;
+    stats = bitmap_map_lookup_elem(bitmap_map, &key1);
+    printf("%d\n", *stats);
+    
+    bitmap_map_update_elem(bitmap_map, &key1, NULL, 2);
     stats = bitmap_map_lookup_elem(bitmap_map, &key1);
     printf("%d\n", *stats);
 

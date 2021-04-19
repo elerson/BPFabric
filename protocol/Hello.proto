@@ -1,4 +1,5 @@
 message Hello {
     required uint32 version = 1;
     required uint64 dpid = 2;
+    required int32 type = 3;
 }

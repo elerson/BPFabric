@@ -4,6 +4,9 @@
 #include <string.h>
 #include <errno.h>
 
+#include "utils.h"
+#define DEBUG_ENV 1
+
 #include "bitmapmap.h"
 #include "libghthash/ght_hash_table.h"
 
@@ -33,12 +36,16 @@ struct bpf_map *bitmap_map_alloc(union bpf_attr *attr)
 
     elem_size = ((attr->value_size-1)/(sizeof(uint32_t)*8) + 1)*sizeof(uint32_t);
     /* allocate the bitmap structure*/
-    bitmap = calloc(attr->max_entries * elem_size, sizeof(*bitmap));
+    bitmap = malloc(attr->max_entries * elem_size*sizeof(uint32_t) + sizeof(uint32_t) + sizeof(*bitmap));
     
     if (!bitmap) {
         errno = ENOMEM;
         return NULL;
     }
+    
+#ifdef DEBUG_ENV
+   saveLog("/tmp/BITMAP", attr->max_entries * elem_size*sizeof(uint32_t) );
+#endif
 
     //printf("teste\n");
 
@@ -64,17 +71,20 @@ void *bitmap_map_lookup_elem(struct bpf_map *map, void *key)
 {
     //printf("find %d\n", *((uint32_t*) key));
     uint32_t index, hash_value, i;
-    uint32_t* ret = calloc(1, sizeof(uint32_t));
-    *ret = 1;
+
     uint32_t *ptr;
     struct bpf_array *array = container_of(map, struct bpf_array, map);
+
+    uint32_t* ret = (uint32_t*) array->value;// calloc(1, sizeof(uint32_t));
+    *ret = 1;
     for (index = 0; index < array->map.max_entries; index++ ){
-    	ptr = (uint32_t*) array->value + array->map.value_size*index;
+    	//ptr = (uint32_t*) array->value + sizeof(uint32_t) + array->map.value_size*index;
+    	ptr = &((uint32_t*) (array->value + sizeof(uint32_t)))[array->map.value_size*index];
     	for (i = 0; i < array->elem_size; i++)
         {
-    	    hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
+    	    hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*sizeof(uint32_t)*8);
             //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
-    	    *ret &= (ptr[hash_value/sizeof(uint32_t)*8] & (0x1 << (hash_value%(sizeof(uint32_t)*8)))) != 0;
+    	    *ret &= (ptr[hash_value/(sizeof(uint32_t)*8)] & (0x1 << (hash_value%(sizeof(uint32_t)*8)))) != 0;
         }
         //printf("\n");
     }
@@ -91,7 +101,7 @@ int bitmap_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
                  uint64_t map_flags)
 {
-    printf("update %d %d\n", *((uint32_t*) key), map_flags);
+    //printf("update %d %d\n", *((uint32_t*) key), map_flags);
     if (map_flags > BPF_EXIST) {
         /* unknown flags */
         errno = EINVAL;
@@ -111,25 +121,29 @@ int bitmap_map_update_elem(struct bpf_map *map, void *key, void *value,
     struct bpf_array *array = container_of(map, struct bpf_array, map);
     if(map_flags == BPF_CLEAN)
     {
-        for (index = 0; index < array->map.max_entries; index++ )
+    
+    	 memset(array->value, 0, array->map.max_entries*array->map.value_size*sizeof(uint32_t) +  sizeof(*array) + sizeof(uint32_t));
+        /*for (index = 0; index < array->map.max_entries; index++ )
         {   
-            ptr = (uint32_t*) array->value + array->map.value_size*index;
+            ptr = (uint32_t*) array->value + sizeof(uint32_t) + array->map.value_size*index;
             for (i = 0; i < array->map.value_size/sizeof(uint32_t); i++)
             {
                 ptr[i] = 0;            
             }
-        }
+        }*/
         return 0;
     }
 
 
     for (index = 0; index < array->map.max_entries; index++ ){
-        ptr = (uint32_t*) array->value + array->map.value_size*index;
+        //ptr = (uint32_t*) array->value + sizeof(uint32_t) + array->map.value_size*index;
+        ptr = &((uint32_t*) (array->value + sizeof(uint32_t)))[array->map.value_size*index];
         for (i = 0; i < array->elem_size; i++)
         {
-            hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
+            hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*sizeof(uint32_t)*8);
+            //hash_value = bitmaphash(*((uint32_t*) key), index, i)%(array->map.value_size*8);
             //printf("hash %d key %d \n", hash_value, *((uint32_t*) key));
-            ptr[hash_value/sizeof(uint32_t)*8] |= (0x1 << (hash_value%(sizeof(uint32_t)*8)));
+            ptr[hash_value/(sizeof(uint32_t)*8)] |= (0x1 << (hash_value%(sizeof(uint32_t)*8)));
         }
     }
     return 0;

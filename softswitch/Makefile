@@ -1,4 +1,4 @@
-CFLAGS += -g -I../ubpf/inc -I../agent -I../includes
+CFLAGS += -g -I../ubpf/inc -I../agent -I../includes -I../bpfmap
 LDFLAGS += -L../ubpf -L../bpfmap
 LDLIBS += -lpthread -lprotobuf-c -lubpf -lbpfmap -lm
 
