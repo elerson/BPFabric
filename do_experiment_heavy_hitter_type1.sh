@@ -5,18 +5,18 @@
 #rows=(10 20 40)
 #phis=(50 100 200 400)
 #types=(ELASTIC MVSKETCH)
-#times=(2 4)
-#num_heavys=(500 1000 2000)
-#repetitions=(1 2 3 4 5)
+#times=(1 2)
+#num_heavys=(500 1000 2000 4000)
+#repetitions=(1 2)
 
 
 hashes=(3)
-cols=(1000)
+cols=(10000)
 rows=(10)
 phis=(100)
 types=(ELASTIC)
 times=(2)
-num_heavys=(2000)
+num_heavys=(3000)
 repetitions=(1)
 
 for hash in ${hashes[@]}; do
