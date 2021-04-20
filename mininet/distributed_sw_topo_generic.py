@@ -12,11 +12,10 @@ import threading
 import sys
 
 from time import sleep
-import socket
+import zmq
+UDP_PORT=5543
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 50005
-MESSAGE = "0-EXP"
+
 
 class DistributedSwitchTopo(Topo):
     def __init__(self, **opts):
@@ -69,11 +68,8 @@ def exec_pcap(host):
    host[0].cmd('./pcap.sh '+host[1] +' '+ host[2])
 
 def main():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    
-    data_file = sys.argv[1]
-    sock.sendto('1-'+data_file, (UDP_IP, UDP_PORT))
-    
+
+
     
     memory_files = ['MVSKETCH', 'CUCKOOFILTER', 'MINCOUNT', 'KARY', 'ELASTIC_MAP', 'BITMAP']
     os.system("rm /tmp/SWITCH_TIME*")
@@ -81,13 +77,20 @@ def main():
         os.system("rm /tmp/" + mem_file)
         
     
-    
-     
-     
-     
     topo = DistributedSwitchTopo()
     net = Mininet(topo = topo, host = eBPFHost, switch = eBPFSwitch, controller = None)
     net.start()
+    
+    sleep(3)
+    context = zmq.Context()
+    sock = context.socket(zmq.PUSH)
+    sock.connect("tcp://localhost:%s" % UDP_PORT)
+    
+    data_file = sys.argv[1]
+    MESSAGE = bytes('1-'+data_file)
+    sock.send(MESSAGE)
+    
+    
     #time.sleep(5)
     #
     hosts = [(net.get('h1'), 'h1-eth0', '/media/elerson/dados/pcap/2016/worker0/ether-chicago-2016_0.pcap'),
@@ -132,8 +135,8 @@ def main():
     sleep(10)
     
     
-    
-    sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
+    MESSAGE= bytes('0-END')
+    sock.send(MESSAGE)
     print 'finshed'
     
     #CLI(net)

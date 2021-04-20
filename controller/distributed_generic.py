@@ -14,8 +14,11 @@ import os
 import json
 import os.path
 import glob
-UDP_IP = "127.0.0.1"
-UDP_PORT = 50005
+
+import zmq
+UDP_PORT=5543
+
+
 
 memory_files = ['MVSKETCH', 'CUCKOOFILTER', 'MINCOUNT', 'KARY', 'ELASTIC_MAP', 'BITMAP']
 
@@ -35,9 +38,13 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         try:
             self.sock
         except:
-            t = threading.Thread(target=self.sigint_handler)           
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-            self.sock.bind((UDP_IP, UDP_PORT))
+            t = threading.Thread(target=self.sigint_handler)
+            
+            self.sock = 1# context.socket(zmq.REP)
+            #self.sock.bind("tcp://*:%s" % UDP_PORT)
+
+            #self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            #self.sock.bind((UDP_IP, UDP_PORT))
             #self.sock.setblocking(0)
             #fcntl.fcntl(self.sock, fcntl.F_SETFL, os.O_NONBLOCK)
             t.start()
@@ -130,10 +137,12 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         return memory_data
     
     def sigint_handler(self):
-        #time.sleep(10)
+        context = zmq.Context()
+        sock = context.socket(zmq.PULL)
+        sock.bind("tcp://*:%s" % UDP_PORT)
         
         while True:
-            rcv_data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
+            rcv_data = str(sock.recv())#(1024) # buffer size is 1024 bytes
             
             if(rcv_data[0] == '1'):
                 rcv_str = rcv_data.split('-')[1].split('.')[0]
@@ -170,5 +179,8 @@ def signal_handler(sig, frame):
     os.kill(os.getpid(),signal.SIGKILL)
 
 if __name__ == '__main__':
+
+    #data = sock.recv()
+    #print(data)
     signal.signal(signal.SIGINT, signal_handler)
     SimpleSwitchApplication().run()
