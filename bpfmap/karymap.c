@@ -92,7 +92,7 @@ struct bpf_map *kary_map_alloc(union bpf_attr *attr)
     //mincountmap = calloc(attr->max_entries * elem_size, sizeof(*mincountmap));
     
     mincountmap = malloc((attr->max_entries) * elem_size + sizeof(struct bpf_array) + sizeof(uint32_t));
-    //memset(mincountmap, 0, attr->max_entries * elem_size + sizeof(*mincountmap));
+    memset(mincountmap, 0, (attr->max_entries) * elem_size + sizeof(struct bpf_array) + sizeof(uint32_t));
     if (!mincountmap) {
         errno = ENOMEM;
         return NULL;

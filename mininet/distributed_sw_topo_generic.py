@@ -81,7 +81,7 @@ def main():
     net = Mininet(topo = topo, host = eBPFHost, switch = eBPFSwitch, controller = None)
     net.start()
     
-    sleep(3)
+    sleep(5)
     context = zmq.Context()
     sock = context.socket(zmq.PUSH)
     sock.connect("tcp://localhost:%s" % UDP_PORT)
@@ -93,9 +93,12 @@ def main():
     
     #time.sleep(5)
     #
+    
+    
     hosts = [(net.get('h1'), 'h1-eth0', '/media/elerson/dados/pcap/2016/worker0/ether-chicago-2016_0.pcap'),
              (net.get('h2'), 'h2-eth0', '/media/elerson/dados/pcap/2016/worker1/ether-chicago-2016_1.pcap'),
              (net.get('h3'), 'h3-eth0', '/media/elerson/dados/pcap/2016/worker2/ether-chicago-2016_2.pcap')]
+    hosts = [(net.get('h1'), 'h1-eth0', '/media/elerson/dados/pcap/2016/worker0/ether-chicago-2016_0.pcap')]
     #hosts = [(net.get('h1'), 'h1-eth0', '/media/elerson/dados/pcap/2016/worker0/meta.json'),
     #         (net.get('h2'), 'h2-eth1', '/media/elerson/dados/pcap/2016/worker1/meta.json')]
     

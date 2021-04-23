@@ -34,7 +34,7 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         self.cols = 0
         self.phi = 0
         self.lasttime = 0
-        
+        self.ni_data = []
         try:
             self.sock
         except:
@@ -93,7 +93,7 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             self.data[int(pkt.dpid)] = []
         
         if(pkt.id == 1):
-            print('1 data', int(pkt.dpid))
+            print('1 data', int(pkt.dpid), lasttime)
             self.stage = stage
             self.hashes = hashes
             self.cols = cols
@@ -101,11 +101,16 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             self.rows = rows
             self.data_id[int(pkt.dpid)] = (dst0, dst1, dst2)
             
+            for ip_ in self.ni_data:
+                self.data[int(pkt.dpid)].append([ip_, self.data_id[int(pkt.dpid)]])
+                
+            self.ni_data = []
+            
         else:
             print(pkt.dpid, ip_, self.data_id[int(pkt.dpid)])
-
+            self.ni_data.append(ip_)
             self.lasttime = lasttime
-            self.data[int(pkt.dpid)].append([ip_, self.data_id[int(pkt.dpid)]])
+            #self.data[int(pkt.dpid)].append([ip_, self.data_id[int(pkt.dpid)]])
         
     @set_event_handler(Header.PACKET_IN)
     def packet_in(self, connection, pkt):

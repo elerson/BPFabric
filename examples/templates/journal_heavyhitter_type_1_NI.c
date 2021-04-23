@@ -61,6 +61,9 @@ uint64_t prog(struct packet *pkt)
 	struct arrival_stats *stats;
 	unsigned int key = 0;
 	bpf_map_lookup_elem(&count_stats, &key, &stats);
+        if(stats->lasttime == 0){
+           stats->lasttime = pkt->metadata.sec;
+        }
        
         
         uint32_t *found;
@@ -91,6 +94,7 @@ uint64_t prog(struct packet *pkt)
 		   bpf_map_update_elem(&identification_map, &(pkt->ip.saddr), 0, 0);
 		}
         }else{
+               bpf_notify(1, stats, sizeof(struct arrival_stats));
                
 		stats->lasttime = pkt->metadata.sec;
 		
