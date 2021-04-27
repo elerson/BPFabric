@@ -85,7 +85,7 @@ static void siguser1(int num)
     sprintf(buffer, "/tmp/SWITCH_TIME%u", pid);
 
     printf("SAVE DATA ...\n");
-    saveLog2(buffer, total_time/total_time_count, total_time_squared/total_time_count);
+    saveLog2(buffer, total_time/total_time_count, total_time_count);
     #endif
 }
 
