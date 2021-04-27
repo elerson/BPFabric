@@ -54,7 +54,7 @@ class SimpleSwitchApplication(eBPFCoreApplication):
         self.data_id = {}
         
         if(pkt.type == 1):
-            with open('../examples/load_balancer.o', 'rb') as f:
+            with open('../examples/generic_load_balancer.o', 'rb') as f:
                 print("Installing the eBPF ELF - LOAD BALANCER")
                 connection.send(InstallRequest(elf=f.read()))
         elif(pkt.type == 0):
@@ -100,6 +100,9 @@ class SimpleSwitchApplication(eBPFCoreApplication):
             self.phi = phi
             self.rows = rows
             self.data_id[int(pkt.dpid)] = (dst0, dst1, dst2)
+            
+            if int(pkt.dpid) not in self.ni_data:
+            	self.ni_data[int(pkt.dpid)] = []
             
             for ip_ in self.ni_data[int(pkt.dpid)]:
                 self.data[int(pkt.dpid)].append([ip_, self.data_id[int(pkt.dpid)]])

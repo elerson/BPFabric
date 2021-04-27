@@ -16,18 +16,19 @@ import zmq
 UDP_PORT=5543
 
 
+N_WORKERS = 0
 
 class DistributedSwitchTopo(Topo):
     def __init__(self, **opts):
         # Initialize topology and default options
         Topo.__init__(self, **opts)
         self.N_LOAD_BALANCER = 3
-        self.N_WORKERS = 4
+        global N_WORKERS
 	load_balancer_switches = []
 	worker_switches = []
 	hosts = []
 	
-	for i in range(self.N_WORKERS):
+	for i in range(N_WORKERS):
             switch = self.addSwitch('w'+str(i), switch_path="../softswitch/softswitch")  
             worker_switches.append(switch)
             pass
@@ -69,13 +70,14 @@ def exec_pcap(host):
 
 def main():
 
-
+    global N_WORKERS
     
     memory_files = ['MVSKETCH', 'CUCKOOFILTER', 'MINCOUNT', 'KARY', 'ELASTIC_MAP', 'BITMAP']
     os.system("rm /tmp/SWITCH_TIME*")
     for mem_file in memory_files:
         os.system("rm /tmp/" + mem_file)
         
+    N_WORKERS = int(sys.argv[2])
     
     topo = DistributedSwitchTopo()
     net = Mininet(topo = topo, host = eBPFHost, switch = eBPFSwitch, controller = None)
